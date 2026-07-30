@@ -1,0 +1,20 @@
+{
+  "name": "Cozy Pomodoro App",
+  "short_name": "Pomodoro",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#fff0f3",
+  "theme_color": "#ff758f",
+  "icons": [
+    {
+      "src": "https://flaticon.com",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://flaticon.com",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
