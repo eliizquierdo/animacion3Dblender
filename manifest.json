@@ -3,8 +3,8 @@
   "short_name": "Pomodoro",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#fff0f3",
-  "theme_color": "#ff758f",
+  "background_color": "#ede3d3",
+  "theme_color": "#a8562f",
   "icons": [
     {
       "src": "https://flaticon.com",

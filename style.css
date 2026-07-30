@@ -5,25 +5,25 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #fff0f3;
+    background-color: #ede3d3;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #ff758f;
+    color: #7a6a56;
 }
 .app-container {
     display: flex;
     flex-direction: row;
-    gap: 30px;
+    gap: 24px;
     max-width: 700px;
     width: 100%;
     padding: 20px;
 }
 .pomodoro-card {
-    background-color: #ffffff;
-    padding: 40px;
-    border-radius: 30px;
-    box-shadow: 0 10px 30px rgba(255, 117, 143, 0.15);
+    background-color: #faf6ef;
+    padding: 36px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(59, 47, 38, 0.08);
     text-align: center;
-    border: 4px solid #ffb3c1;
+    border: 1px solid #d9c9ab;
     max-width: 320px;
     width: 100%;
     flex: 1;
@@ -38,34 +38,34 @@ body {
     flex: 1;
     padding: 8px 5px;
     border: none;
-    border-radius: 50px;
+    border-radius: 8px;
     font-size: 0.8rem;
-    font-weight: bold;
+    font-weight: 600;
     cursor: pointer;
-    background-color: #ffccd5; 
-    color: #ff4d6d;
-    transition: transform 0.2s, background-color 0.2s;
+    background-color: #e8dcc4;
+    color: #7a6a56;
+    transition: background-color 0.2s;
 }
 .tab-btn:hover {
-    background-color: #ffb3c1;
-    transform: scale(1.03);
+    background-color: #ddcda9;
 }
 .tab-btn.active {
-    background-color: #ff758f;
-    color: white;
+    background-color: #a8562f;
+    color: #faf6ef;
 }
 h1, h2 {
     margin-top: 0;
-    font-size: 1.8rem;
-    letter-spacing: 1px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
     text-align: center;
+    color: #3b2f26;
 }
 .timer-display {
-    font-size: 4.5rem;
-    font-weight: bold;
+    font-size: 4rem;
+    font-weight: 600;
     margin: 20px 0;
-    color: #ff4d6d;
-    text-shadow: 2px 2px #fff0f3;
+    color: #3b2f26;
 }
 .btn-group {
     display: flex;
@@ -80,43 +80,41 @@ button {
     flex: 1;
     padding: 12px 15px;
     border: none;
-    border-radius: 50px;
+    border-radius: 10px;
     font-size: 1rem;
-    font-weight: bold;
+    font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s, background-color 0.2s;
-    background-color: #ff758f;
-    color: white;
+    transition: background-color 0.2s;
+    background-color: #a8562f;
+    color: #faf6ef;
 }
 .btn-start:hover {
-    background-color: #ff4d6d;
-    transform: scale(1.05);
+    background-color: #8f4526;
 }
 .btn-reset {
     flex: 1;
     padding: 12px 15px;
     border: none;
-    border-radius: 50px;
+    border-radius: 10px;
     font-size: 1rem;
-    font-weight: bold;
+    font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s, background-color 0.2s;
-    background-color: #ffccd5;
-    color: #ff4d6d;
+    transition: background-color 0.2s;
+    background-color: #e8dcc4;
+    color: #7a6a56;
 }
 .btn-reset:hover {
-    background-color: #ffb3c1;
-    transform: scale(1.05);
+    background-color: #ddcda9;
 }
 button:active {
-    transform: scale(0.95);
+    transform: scale(0.97);
 }
 .tasks-card {
-    background-color: #ffffff;
-    padding: 40px;
-    border-radius: 30px;
-    box-shadow: 0 10px 30px rgba(255, 117, 143, 0.15);
-    border: 4px solid #ffb3c1;
+    background-color: #faf6ef;
+    padding: 36px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(59, 47, 38, 0.08);
+    border: 1px solid #d9c9ab;
     max-width: 320px;
     width: 100%;
     flex: 1;
@@ -131,29 +129,29 @@ button:active {
 }
 #taskInput {
     padding: 12px 15px;
-    border: 2px solid #ffccd5;
-    border-radius: 50px;
+    border: 1px solid #d9c9ab;
+    border-radius: 10px;
     font-size: 0.9rem;
     outline: none;
-    color: #ff4d6d;
+    color: #3b2f26;
+    background-color: #faf6ef;
 }
 #taskInput::placeholder {
-    color: #ffb3c1;
+    color: #b3a288;
 }
 #addTaskBtn {
     padding: 10px 15px;
     border: none;
-    border-radius: 50px;
+    border-radius: 10px;
     font-size: 0.9rem;
-    font-weight: bold;
+    font-weight: 600;
     cursor: pointer;
-    background-color: #ff758f;
-    color: white;
-    transition: background-color 0.2s, transform 0.2s;
+    background-color: #a8562f;
+    color: #faf6ef;
+    transition: background-color 0.2s;
 }
 #addTaskBtn:hover {
-    background-color: #ff4d6d;
-    transform: scale(1.03);
+    background-color: #8f4526;
 }
 .task-list {
     list-style: none;
@@ -167,35 +165,36 @@ button:active {
     align-items: center;
     gap: 10px;
     padding: 10px 5px;
-    border-bottom: 1px dashed #fff0f3;
+    border-bottom: 1px solid #ede3d3;
     font-size: 0.95rem;
     font-weight: 500;
-    color: #ff758f;
+    color: #3b2f26;
     transition: color 0.3s;
 }
 .task-item input[type="checkbox"] {
     appearance: none;
     width: 18px;
     height: 18px;
-    border: 2px solid #ffccd5;
-    border-radius: 50%;
+    border: 1.5px solid #d9c9ab;
+    border-radius: 4px;
     cursor: pointer;
     display: grid;
     place-content: center;
     transition: background-color 0.2s, border-color 0.2s;
+    flex-shrink: 0;
 }
 .task-item input[type="checkbox"]:checked {
-    background-color: #cccccc;
-    border-color: #cccccc;
+    background-color: #a8562f;
+    border-color: #a8562f;
 }
 .task-item input[type="checkbox"]:checked::before {
     content: "✓";
-    color: white;
+    color: #faf6ef;
     font-size: 0.7rem;
     font-weight: bold;
 }
 .task-item.completed {
-    color: #cccccc;
+    color: #b3a288;
     text-decoration: line-through;
 }
 @media (max-width: 680px) {

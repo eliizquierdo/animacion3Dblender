@@ -4,9 +4,9 @@ const TIMES = {
     long: 15 * 60
 };
 const TEXTS = {
-    work: '🍓study time🍓',
-    short: '🌸little break🌸',
-    long: '🧁long break🧁'
+    work: 'Focus',
+    short: 'Short Break',
+    long: 'Long Break'
 };
 
 let timeLeft = TIMES.work;
@@ -71,17 +71,17 @@ function setMode(mode) {
     longTab.classList.toggle('active', mode === 'long');
     
     startBtn.textContent = 'Start';
-    startBtn.style.backgroundColor = '#ff758f';
-    startBtn.style.color = 'white';
+    startBtn.style.backgroundColor = '#a8562f';
+    startBtn.style.color = '#faf6ef';
     updateDisplay();
 }
 
 function toggleTimer() {
     if (timerId === null) {
         startBtn.textContent = 'Pause';
-        startBtn.style.backgroundColor = '#ffb3c1';
-        startBtn.style.color = '#ff4d6d';
-        
+        startBtn.style.backgroundColor = '#e8dcc4';
+        startBtn.style.color = '#3b2f26';
+
         timerId = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
@@ -89,8 +89,8 @@ function toggleTimer() {
             } else {
                 clearInterval(timerId);
                 timerId = null;
-                playSoftAlarm(); 
-                alert('🌸 Time is up! 🌸');
+                playSoftAlarm();
+                alert('Time is up!');
                 resetTimer();
             }
         }, 1000);
@@ -98,8 +98,8 @@ function toggleTimer() {
         clearInterval(timerId);
         timerId = null;
         startBtn.textContent = 'Start';
-        startBtn.style.backgroundColor = '#ff758f';
-        startBtn.style.color = 'white';
+        startBtn.style.backgroundColor = '#a8562f';
+        startBtn.style.color = '#faf6ef';
     }
 }
 
@@ -109,8 +109,8 @@ function resetTimer() {
     timeLeft = TIMES[currentMode];
     updateDisplay();
     startBtn.textContent = 'Start';
-    startBtn.style.backgroundColor = '#ff758f';
-    startBtn.style.color = 'white';
+    startBtn.style.backgroundColor = '#a8562f';
+    startBtn.style.color = '#faf6ef';
 }
 
 function addTask() {
