@@ -6,6 +6,8 @@ permanente, asociadas a esa cuenta.
 
 Deploy en vivo: https://metodo-pomodoro-4ohr.vercel.app
 
+¿No conocés la técnica Pomodoro? Ver [GUIA_POMODORO.md](GUIA_POMODORO.md).
+
 ## Funcionalidad
 
 - Temporizador con tres modos (25 / 5 / 15 minutos) y alarma sonora al
