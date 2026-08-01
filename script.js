@@ -13,18 +13,24 @@ let timeLeft = TIMES.work;
 let currentMode = 'work';
 let timerId = null;
 let authMode = 'login';
+let pomodorosCompleted = 0;
 
 const timerDisplay = document.getElementById('timer');
 const startBtn = document.getElementById('startBtn');
 const resetBtn = document.getElementById('resetBtn');
 const statusText = document.getElementById('statusText');
+const pomodoroCount = document.getElementById('pomodoroCount');
 const workTab = document.getElementById('workTab');
 const shortTab = document.getElementById('shortTab');
 const longTab = document.getElementById('longTab');
 
 const taskInput = document.getElementById('taskInput');
+const taskPriority = document.getElementById('taskPriority');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
+
+const PRIORITY_LABELS = { normal: 'Normal', important: 'Important', urgent: 'Urgent' };
+const PRIORITY_CYCLE = { normal: 'important', important: 'urgent', urgent: 'normal' };
 
 const userBar = document.getElementById('userBar');
 const userEmailEl = document.getElementById('userEmail');
@@ -73,6 +79,10 @@ function updateDisplay() {
     timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
+function updatePomodoroCount() {
+    pomodoroCount.textContent = `Pomodoro ${pomodorosCompleted + 1} of 4`;
+}
+
 function setMode(mode) {
     clearInterval(timerId);
     timerId = null;
@@ -88,6 +98,7 @@ function setMode(mode) {
     startBtn.style.backgroundColor = '#a8562f';
     startBtn.style.color = '#faf6ef';
     updateDisplay();
+    updatePomodoroCount();
 }
 
 function toggleTimer() {
@@ -104,8 +115,7 @@ function toggleTimer() {
                 clearInterval(timerId);
                 timerId = null;
                 playSoftAlarm();
-                alert('Time is up!');
-                resetTimer();
+                handleCycleComplete();
             }
         }, 1000);
     } else {
@@ -125,6 +135,23 @@ function resetTimer() {
     startBtn.textContent = 'Start';
     startBtn.style.backgroundColor = '#a8562f';
     startBtn.style.color = '#faf6ef';
+}
+
+function handleCycleComplete() {
+    if (currentMode === 'work') {
+        pomodorosCompleted++;
+        if (pomodorosCompleted >= 4) {
+            pomodorosCompleted = 0;
+            alert('Focus session complete! Time for a long break.');
+            setMode('long');
+        } else {
+            alert('Focus session complete! Time for a short break.');
+            setMode('short');
+        }
+    } else {
+        alert('Break is over! Time to focus.');
+        setMode('work');
+    }
 }
 
 // --- Auth ---
@@ -218,6 +245,12 @@ function renderTask(task) {
     span.textContent = task.text;
     span.className = 'task-text';
 
+    const priorityBadge = document.createElement('button');
+    priorityBadge.type = 'button';
+    priorityBadge.title = 'Click to change priority';
+    priorityBadge.textContent = PRIORITY_LABELS[task.priority] || 'Normal';
+    priorityBadge.className = `priority-badge priority-${task.priority || 'normal'}`;
+
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.className = 'task-delete-btn';
@@ -229,6 +262,14 @@ function renderTask(task) {
         toggleTask(task.id, checkbox.checked);
     });
 
+    priorityBadge.addEventListener('click', () => {
+        const nextPriority = PRIORITY_CYCLE[task.priority] || 'normal';
+        task.priority = nextPriority;
+        priorityBadge.textContent = PRIORITY_LABELS[nextPriority];
+        priorityBadge.className = `priority-badge priority-${nextPriority}`;
+        updateTaskPriority(task.id, nextPriority);
+    });
+
     deleteBtn.addEventListener('click', () => {
         li.remove();
         deleteTask(task.id);
@@ -236,6 +277,7 @@ function renderTask(task) {
 
     li.appendChild(checkbox);
     li.appendChild(span);
+    li.appendChild(priorityBadge);
     li.appendChild(deleteBtn);
     taskList.appendChild(li);
 }
@@ -251,17 +293,19 @@ async function loadTasks() {
 async function addTask() {
     const taskText = taskInput.value.trim();
     if (taskText === '') return;
+    const priority = taskPriority.value;
 
     const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: taskText })
+        body: JSON.stringify({ text: taskText, priority })
     });
     if (!res.ok) return;
 
     const data = await res.json();
     renderTask(data.task);
     taskInput.value = '';
+    taskPriority.value = 'normal';
 }
 
 async function toggleTask(id, completed) {
@@ -269,6 +313,14 @@ async function toggleTask(id, completed) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed })
+    });
+}
+
+async function updateTaskPriority(id, priority) {
+    await fetch(`/api/tasks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priority })
     });
 }
 

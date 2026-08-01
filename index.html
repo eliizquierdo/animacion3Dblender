@@ -42,6 +42,7 @@
             </div>
 
             <h1 id="statusText">Focus</h1>
+            <p class="pomodoro-count" id="pomodoroCount">Pomodoro 1 of 4</p>
             <div class="timer-display" id="timer">25:00</div>
 
             <div class="btn-group">
@@ -53,6 +54,11 @@
             <h2>To-Do List</h2>
             <div class="input-group">
                 <input type="text" id="taskInput" placeholder="Write your task..." autocomplete="off">
+                <select id="taskPriority">
+                    <option value="normal" selected>Normal</option>
+                    <option value="important">Important</option>
+                    <option value="urgent">Urgent</option>
+                </select>
                 <button id="addTaskBtn">Add Task</button>
             </div>
             <ul class="task-list" id="taskList">

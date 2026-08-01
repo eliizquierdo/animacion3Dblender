@@ -61,6 +61,13 @@ h1, h2 {
     text-align: center;
     color: #3b2f26;
 }
+.pomodoro-count {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: #a8562f;
+}
 .timer-display {
     font-size: 4rem;
     font-weight: 600;
@@ -139,6 +146,16 @@ button:active {
 #taskInput::placeholder {
     color: #b3a288;
 }
+#taskPriority {
+    padding: 10px 15px;
+    border: 1px solid #d9c9ab;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    outline: none;
+    color: #3b2f26;
+    background-color: #faf6ef;
+    cursor: pointer;
+}
 #addTaskBtn {
     padding: 10px 15px;
     border: none;
@@ -199,6 +216,31 @@ button:active {
 }
 .task-text {
     flex: 1;
+}
+.priority-badge {
+    border: none;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+}
+.priority-badge:hover {
+    opacity: 0.8;
+}
+.priority-normal {
+    background-color: #e8dcc4;
+    color: #7a6a56;
+}
+.priority-important {
+    background-color: #f3d9a0;
+    color: #7a4a12;
+}
+.priority-urgent {
+    background-color: #f3c4bb;
+    color: #8a2e1f;
 }
 .task-delete-btn {
     border: none;

@@ -60,8 +60,12 @@ primera vez que se llama a cualquier endpoint, no hace falta correr ninguna
 migración a mano:
 
 - `users (id, email, password_hash, created_at)`
-- `tasks (id, user_id, text, completed, created_at)` — `user_id` referencia
-  a `users` con `ON DELETE CASCADE`.
+- `tasks (id, user_id, text, completed, priority, created_at)` — `user_id`
+  referencia a `users` con `ON DELETE CASCADE`. `priority` es texto libre
+  validado en la API (`normal` / `important` / `urgent`, default `normal`);
+  se agregó con `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, así que una
+  base ya existente se actualiza sola la primera vez que corre cualquier
+  endpoint, sin migración manual.
 
 ## Variables de entorno
 
