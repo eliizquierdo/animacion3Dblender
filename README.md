@@ -12,7 +12,11 @@ Deploy en vivo: https://metodo-pomodoro-4ohr.vercel.app
 
 - Temporizador con tres modos (25 / 5 / 15 minutos) y alarma sonora al
   terminar.
+- Cuenta automáticamente los pomodoros completados y decide sola si el
+  próximo descanso es corto o largo (descanso largo cada 4 focos).
 - Lista de tareas: agregar, marcar como completada y borrar.
+- Etiqueta de prioridad por tarea (Normal / Important / Urgent), elegible
+  al crearla y modificable después con un click sobre la etiqueta.
 - Registro e inicio de sesión por email y contraseña.
 - Las tareas persisten en una base de datos y son privadas de cada cuenta
   (nadie más puede verlas ni modificarlas).
