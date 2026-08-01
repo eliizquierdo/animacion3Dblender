@@ -1,4 +1,4 @@
-# Temporizador Pomodoro
+# Cozy Pomodoro
 
 Temporizador Pomodoro (Focus / Short Break / Long Break) con una lista de
 tareas. Cada persona crea su cuenta y sus tareas quedan guardadas de forma
@@ -22,6 +22,15 @@ Deploy en vivo: https://metodo-pomodoro-4ohr.vercel.app
   (nadie más puede verlas ni modificarlas).
 - La sesión se mantiene 30 días en el navegador; pasado ese tiempo solo pide
   volver a iniciar sesión — no borra ningún dato.
+- El conteo se calcula contra la hora real de fin (no restando de a un
+  segundo), así que si la pestaña queda minimizada un rato largo, al volver
+  muestra el tiempo correcto en vez de seguir atrasada — y si ya se pasó,
+  suena la alarma al instante. Además mantiene un audio inaudible de fondo
+  mientras corre el timer, para que el navegador no frene tanto la pestaña
+  minimizada (esto ayuda mucho con la compu; en el celular, si la pantalla
+  se bloquea del todo, el sistema operativo puede igual pausar la pestaña —
+  no hay forma 100% garantizada de esto desde una web común, se corrige
+  apenas se desbloquea).
 
 ## Stack
 

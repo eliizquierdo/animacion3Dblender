@@ -12,8 +12,11 @@ const TEXTS = {
 let timeLeft = TIMES.work;
 let currentMode = 'work';
 let timerId = null;
+let targetEndTime = null;
 let authMode = 'login';
 let pomodorosCompleted = 0;
+let keepAliveCtx = null;
+let keepAliveOsc = null;
 
 const timerDisplay = document.getElementById('timer');
 const startBtn = document.getElementById('startBtn');
@@ -79,6 +82,48 @@ function updateDisplay() {
     timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
+// Mantiene la pestaña marcada como "reproduciendo audio" para que el
+// navegador no frene tanto los timers cuando la página está minimizada.
+// Tono grave e inaudible a propósito (no es un error).
+function startKeepAlive() {
+    if (keepAliveCtx) return;
+    keepAliveCtx = new (window.AudioContext || window.webkitAudioContext)();
+    keepAliveOsc = keepAliveCtx.createOscillator();
+    const gain = keepAliveCtx.createGain();
+    gain.gain.value = 0.001;
+    keepAliveOsc.frequency.value = 20;
+    keepAliveOsc.connect(gain);
+    gain.connect(keepAliveCtx.destination);
+    keepAliveOsc.start();
+}
+
+function stopKeepAlive() {
+    if (!keepAliveCtx) return;
+    keepAliveOsc.stop();
+    keepAliveCtx.close();
+    keepAliveCtx = null;
+    keepAliveOsc = null;
+}
+
+// Recalcula cuánto falta contra la hora real de fin (no contando ticks),
+// así el tiempo queda correcto aunque el timer del navegador se haya
+// frenado por estar la pestaña minimizada o el celular bloqueado.
+function checkTimer() {
+    const remainingMs = targetEndTime - Date.now();
+    if (remainingMs <= 0) {
+        timeLeft = 0;
+        updateDisplay();
+        clearInterval(timerId);
+        timerId = null;
+        stopKeepAlive();
+        playSoftAlarm();
+        handleCycleComplete();
+    } else {
+        timeLeft = Math.round(remainingMs / 1000);
+        updateDisplay();
+    }
+}
+
 function updatePomodoroCount() {
     pomodoroCount.textContent = `Pomodoro ${pomodorosCompleted + 1} of 4`;
 }
@@ -86,6 +131,7 @@ function updatePomodoroCount() {
 function setMode(mode) {
     clearInterval(timerId);
     timerId = null;
+    stopKeepAlive();
     currentMode = mode;
     timeLeft = TIMES[mode];
     statusText.textContent = TEXTS[mode];
@@ -107,20 +153,13 @@ function toggleTimer() {
         startBtn.style.backgroundColor = '#e8dcc4';
         startBtn.style.color = '#3b2f26';
 
-        timerId = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                updateDisplay();
-            } else {
-                clearInterval(timerId);
-                timerId = null;
-                playSoftAlarm();
-                handleCycleComplete();
-            }
-        }, 1000);
+        targetEndTime = Date.now() + timeLeft * 1000;
+        startKeepAlive();
+        timerId = setInterval(checkTimer, 250);
     } else {
         clearInterval(timerId);
         timerId = null;
+        stopKeepAlive();
         startBtn.textContent = 'Start';
         startBtn.style.backgroundColor = '#a8562f';
         startBtn.style.color = '#faf6ef';
@@ -130,6 +169,7 @@ function toggleTimer() {
 function resetTimer() {
     clearInterval(timerId);
     timerId = null;
+    stopKeepAlive();
     timeLeft = TIMES[currentMode];
     updateDisplay();
     startBtn.textContent = 'Start';
@@ -347,5 +387,11 @@ authToggleBtn.addEventListener('click', () => setAuthMode(authMode === 'login' ?
     });
 });
 logoutBtn.addEventListener('click', logout);
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && timerId !== null) {
+        checkTimer();
+    }
+});
 
 checkAuth();
