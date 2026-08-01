@@ -1,4 +1,4 @@
-# Cozy Pomodoro
+# Temporizador Pomodoro
 
 Temporizador Pomodoro (Focus / Short Break / Long Break) con una lista de
 tareas. Cada persona crea su cuenta y sus tareas quedan guardadas de forma
