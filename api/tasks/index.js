@@ -1,6 +1,8 @@
 const { getSql, ensureSchema } = require('../../lib/db');
 const { getUserId } = require('../../lib/session');
 
+const ALLOWED_PRIORITIES = ['normal', 'important', 'urgent'];
+
 module.exports = async (req, res) => {
     try {
         const userId = getUserId(req);
@@ -13,7 +15,7 @@ module.exports = async (req, res) => {
 
         if (req.method === 'GET') {
             const tasks = await sql`
-                SELECT id, text, completed FROM tasks
+                SELECT id, text, completed, priority FROM tasks
                 WHERE user_id = ${userId}
                 ORDER BY created_at ASC
             `;
@@ -21,14 +23,19 @@ module.exports = async (req, res) => {
         }
 
         if (req.method === 'POST') {
-            const { text } = req.body || {};
+            const { text, priority } = req.body || {};
             if (typeof text !== 'string' || text.trim() === '') {
                 return res.status(400).json({ error: 'La tarea no puede estar vacía' });
             }
 
+            const finalPriority = priority === undefined ? 'normal' : priority;
+            if (!ALLOWED_PRIORITIES.includes(finalPriority)) {
+                return res.status(400).json({ error: 'Prioridad inválida' });
+            }
+
             const inserted = await sql`
-                INSERT INTO tasks (user_id, text) VALUES (${userId}, ${text.trim()})
-                RETURNING id, text, completed
+                INSERT INTO tasks (user_id, text, priority) VALUES (${userId}, ${text.trim()}, ${finalPriority})
+                RETURNING id, text, completed, priority
             `;
             return res.status(200).json({ task: inserted[0] });
         }

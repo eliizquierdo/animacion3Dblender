@@ -1,6 +1,8 @@
 const { getSql, ensureSchema } = require('../../lib/db');
 const { getUserId } = require('../../lib/session');
 
+const ALLOWED_PRIORITIES = ['normal', 'important', 'urgent'];
+
 module.exports = async (req, res) => {
     try {
         const userId = getUserId(req);
@@ -17,16 +19,38 @@ module.exports = async (req, res) => {
         const sql = getSql();
 
         if (req.method === 'PATCH') {
-            const { completed } = req.body || {};
-            if (typeof completed !== 'boolean') {
-                return res.status(400).json({ error: 'completed debe ser booleano' });
+            const { completed, priority } = req.body || {};
+            const hasCompleted = typeof completed === 'boolean';
+            const hasPriority = typeof priority === 'string';
+
+            if (hasPriority && !ALLOWED_PRIORITIES.includes(priority)) {
+                return res.status(400).json({ error: 'Prioridad inválida' });
+            }
+            if (!hasCompleted && !hasPriority) {
+                return res.status(400).json({ error: 'Nada para actualizar' });
             }
 
-            const updated = await sql`
-                UPDATE tasks SET completed = ${completed}
-                WHERE id = ${taskId} AND user_id = ${userId}
-                RETURNING id, text, completed
-            `;
+            let updated;
+            if (hasCompleted && hasPriority) {
+                updated = await sql`
+                    UPDATE tasks SET completed = ${completed}, priority = ${priority}
+                    WHERE id = ${taskId} AND user_id = ${userId}
+                    RETURNING id, text, completed, priority
+                `;
+            } else if (hasCompleted) {
+                updated = await sql`
+                    UPDATE tasks SET completed = ${completed}
+                    WHERE id = ${taskId} AND user_id = ${userId}
+                    RETURNING id, text, completed, priority
+                `;
+            } else {
+                updated = await sql`
+                    UPDATE tasks SET priority = ${priority}
+                    WHERE id = ${taskId} AND user_id = ${userId}
+                    RETURNING id, text, completed, priority
+                `;
+            }
+
             if (updated.length === 0) {
                 return res.status(404).json({ error: 'Tarea no encontrada' });
             }
