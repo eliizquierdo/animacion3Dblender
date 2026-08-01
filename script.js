@@ -216,14 +216,27 @@ function renderTask(task) {
 
     const span = document.createElement('span');
     span.textContent = task.text;
+    span.className = 'task-text';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'task-delete-btn';
+    deleteBtn.textContent = '×';
+    deleteBtn.setAttribute('aria-label', 'Delete task');
 
     checkbox.addEventListener('change', () => {
         li.classList.toggle('completed', checkbox.checked);
         toggleTask(task.id, checkbox.checked);
     });
 
+    deleteBtn.addEventListener('click', () => {
+        li.remove();
+        deleteTask(task.id);
+    });
+
     li.appendChild(checkbox);
     li.appendChild(span);
+    li.appendChild(deleteBtn);
     taskList.appendChild(li);
 }
 
@@ -257,6 +270,10 @@ async function toggleTask(id, completed) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed })
     });
+}
+
+async function deleteTask(id) {
+    await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
 }
 
 startBtn.addEventListener('click', toggleTimer);

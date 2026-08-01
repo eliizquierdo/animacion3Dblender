@@ -197,6 +197,23 @@ button:active {
     color: #b3a288;
     text-decoration: line-through;
 }
+.task-text {
+    flex: 1;
+}
+.task-delete-btn {
+    border: none;
+    background: none;
+    color: #cbbb9e;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 4px;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+.task-delete-btn:hover {
+    color: #a33322;
+}
 @media (max-width: 680px) {
     .app-container {
         flex-direction: column;
