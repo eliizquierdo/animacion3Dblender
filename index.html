@@ -13,7 +13,27 @@
     </script>
 </head>
 <body>
-    <div class="app-container">
+
+    <div class="user-bar hidden" id="userBar">
+        <span id="userEmail"></span>
+        <button id="logoutBtn">Log out</button>
+    </div>
+
+    <div class="auth-card" id="authCard">
+        <h2 id="authTitle">Log in</h2>
+        <div class="input-group">
+            <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
+            <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">
+            <button id="authSubmitBtn">Log in</button>
+        </div>
+        <p id="authError" class="auth-error hidden"></p>
+        <p class="auth-toggle">
+            <span id="authToggleText">Need an account?</span>
+            <button type="button" id="authToggleBtn">Sign up</button>
+        </p>
+    </div>
+
+    <div class="app-container hidden" id="appContainer">
         <div class="pomodoro-card">
             <div class="tabs-group">
                 <button class="tab-btn active" id="workTab">Focus</button>
