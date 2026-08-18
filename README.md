@@ -48,7 +48,7 @@ lib/
 
 ## Base de datos
 
-**Dónde está:** proyecto Neon en [console.neon.tech](https://console.neon.tech), base de datos `neondb` (dentro del proyecto que antes se llamaba `java_journey` / renombrar a gusto desde Settings del proyecto — es solo una etiqueta visual, no afecta la conexión).
+**Dónde está:** proyecto Neon en [console.neon.tech](https://console.neon.tech), base de datos `neondb`
 
 Las tablas se crean automáticamente la primera vez que se llama a cualquier endpoint (`CREATE TABLE IF NOT EXISTS`), sin necesidad de correr migraciones a mano:
 
