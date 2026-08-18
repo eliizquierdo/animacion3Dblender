@@ -29,44 +29,29 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
 
-  /* ── AUTH OVERLAY ───────────────────────────────────────────────── */
-  .auth-overlay {
-    position: fixed; inset: 0; z-index: 100;
-    background: var(--bg);
-    display: flex; align-items: center; justify-content: center;
+  /* ── ACCORDION RESOURCES ────────────────────────────────────────── */
+  .resources-accordion {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; margin-bottom: 24px; overflow: hidden;
   }
-  .auth-overlay.hidden { display: none; }
-  .auth-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 36px 32px;
-    width: 100%; max-width: 380px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  .resources-toggle {
+    width: 100%; background: transparent; border: none;
+    padding: 16px 20px; display: flex; align-items: center;
+    justify-content: space-between; cursor: pointer;
+    color: var(--text); font-size: 0.9rem; font-weight: 700;
+    gap: 10px;
   }
-  .auth-card h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
-  .auth-card p.subtitle { font-size: 0.85rem; color: var(--muted); margin-bottom: 24px; }
-  .auth-card input {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 10px; color: var(--text); padding: 12px 14px;
-    font-size: 0.9rem; margin-bottom: 12px; font-family: inherit;
-    transition: border-color 0.2s;
+  .resources-toggle:hover { background: rgba(255,255,255,0.03); }
+  .resources-toggle .chevron {
+    font-size: 0.75rem; color: var(--muted);
+    transition: transform 0.25s; flex-shrink: 0;
   }
-  .auth-card input:focus { outline: none; border-color: var(--accent); }
-  .auth-submit {
-    width: 100%; background: var(--accent); color: #fff;
-    border: none; border-radius: 10px; padding: 12px;
-    font-size: 0.95rem; font-weight: 700; cursor: pointer;
-    transition: background 0.2s;
+  .resources-accordion.open .chevron { transform: rotate(180deg); }
+  .resources-body {
+    display: none; padding: 0 20px 16px;
+    border-top: 1px solid var(--border);
   }
-  .auth-submit:hover { background: #6a58e5; }
-  .auth-error { color: var(--danger); font-size: 0.82rem; margin-top: 10px; min-height: 18px; }
-  .auth-toggle { font-size: 0.83rem; color: var(--muted); margin-top: 16px; text-align: center; }
-  .auth-toggle button { background: none; border: none; color: var(--accent2); cursor: pointer; font-size: inherit; text-decoration: underline; }
-  .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
-  .auth-logo-icon { font-size: 2rem; }
-  .auth-logo-text h1 { font-size: 1rem; font-weight: 700; }
-  .auth-logo-text p { font-size: 0.75rem; color: var(--muted); }
+  .resources-accordion.open .resources-body { display: block; }
 
   /* ── APP SHELL ──────────────────────────────────────────────────── */
   .app { display: none; flex-direction: column; min-height: 100vh; }
@@ -280,31 +265,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
   <p>Cargando tu plan...</p>
 </div>
 
-<!-- AUTH OVERLAY -->
-<div class="auth-overlay hidden" id="authOverlay">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <div class="auth-logo-icon">🎬</div>
-      <div class="auth-logo-text">
-        <h1>Plan Animación 3D</h1>
-        <p>Iniciá sesión para guardar tu progreso</p>
-      </div>
-    </div>
-    <h2 id="authTitle">Iniciar sesión</h2>
-    <p class="subtitle">Tu progreso se guarda automáticamente en la nube</p>
-    <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
-    <input type="password" id="authPassword" placeholder="Contraseña" autocomplete="current-password">
-    <button class="auth-submit" id="authSubmitBtn">Entrar</button>
-    <p class="auth-error" id="authError"></p>
-    <p class="auth-toggle">
-      <span id="authToggleText">¿No tenés cuenta?</span>
-      <button type="button" id="authToggleBtn">Registrate</button>
-    </p>
-    <p style="font-size:0.75rem;color:var(--muted);margin-top:14px;text-align:center">
-      <a href="index.html" style="color:var(--accent);text-decoration:none">← Volver al Pomodoro</a>
-    </p>
-  </div>
-</div>
+<!-- sin overlay: si no está logueado se redirige a index.html -->
 
 <!-- APP -->
 <div class="app" id="app">
@@ -759,34 +720,39 @@ function renderSession(id) {
   pomoCycle     = 1;
 
   document.getElementById('session-view').innerHTML = `
-    <!-- RESOURCES -->
-    <div class="resources-panel">
-      <h2>📚 Recursos del plan (todos gratuitos salvo Animation Campus)</h2>
-      <div class="resource-list">
-        <div class="resource-item"><div class="resource-icon">🟠</div><div class="resource-info">
-          <a href="https://www.blenderguru.com/" target="_blank">Blender Guru — Tutorial Donut 5.0 <span class="resource-badge">GRATIS</span></a>
-          <p>El tutorial de referencia para principiantes. Cubre modelado, materiales, iluminación y render.</p>
-        </div></div>
-        <div class="resource-item"><div class="resource-icon">🔵</div><div class="resource-info">
-          <a href="https://studio.blender.org/training/" target="_blank">Blender Studio Training <span class="resource-badge">GRATIS</span></a>
-          <p>Cursos oficiales de la Fundación Blender: Animation Fundamentals, Fundamentals 4.5 LTS y más.</p>
-        </div></div>
-        <div class="resource-item"><div class="resource-icon">🌍</div><div class="resource-info">
-          <a href="https://polyhaven.com/" target="_blank">Poly Haven — Texturas, HDRIs y modelos <span class="resource-badge">GRATIS</span></a>
-          <p>Biblioteca de assets 3D 100% gratuita y sin licencias.</p>
-        </div></div>
-        <div class="resource-item"><div class="resource-icon">💬</div><div class="resource-info">
-          <a href="https://discord.me/blender-en-espanol" target="_blank">Blender en Español — Discord <span class="resource-badge">GRATIS</span></a>
-          <p>Comunidad hispanohablante de Blender para preguntas y feedback.</p>
-        </div></div>
-        <div class="resource-item"><div class="resource-icon">🎨</div><div class="resource-info">
-          <a href="https://www.facebook.com/campus.uy" target="_blank">Animation Campus — Animación 3D (pago)</a>
-          <p>Academia privada · Bulevar Artigas 1082, Montevideo. Verificar agenda 2026.</p>
-        </div></div>
-        <div class="resource-item"><div class="resource-icon">📖</div><div class="resource-info">
-          <a href="https://docs.blender.org/manual/en/latest/" target="_blank">Documentación oficial de Blender <span class="resource-badge">GRATIS</span></a>
-          <p>Manual completo para resolver dudas técnicas específicas.</p>
-        </div></div>
+    <!-- RESOURCES ACCORDION -->
+    <div class="resources-accordion" id="resourcesAccordion">
+      <button class="resources-toggle" onclick="toggleResources()">
+        <span>📚 Recursos del plan</span>
+        <span class="chevron">▼</span>
+      </button>
+      <div class="resources-body">
+        <div class="resource-list" style="margin-top:14px">
+          <div class="resource-item"><div class="resource-icon">🟠</div><div class="resource-info">
+            <a href="https://www.blenderguru.com/" target="_blank">Blender Guru — Tutorial Donut 5.0 <span class="resource-badge">GRATIS</span></a>
+            <p>El tutorial de referencia para principiantes. Cubre modelado, materiales, iluminación y render.</p>
+          </div></div>
+          <div class="resource-item"><div class="resource-icon">🔵</div><div class="resource-info">
+            <a href="https://studio.blender.org/training/" target="_blank">Blender Studio Training <span class="resource-badge">GRATIS</span></a>
+            <p>Cursos oficiales de la Fundación Blender: Animation Fundamentals, Fundamentals 4.5 LTS y más.</p>
+          </div></div>
+          <div class="resource-item"><div class="resource-icon">🌍</div><div class="resource-info">
+            <a href="https://polyhaven.com/" target="_blank">Poly Haven — Texturas, HDRIs y modelos <span class="resource-badge">GRATIS</span></a>
+            <p>Biblioteca de assets 3D 100% gratuita y sin licencias.</p>
+          </div></div>
+          <div class="resource-item"><div class="resource-icon">💬</div><div class="resource-info">
+            <a href="https://discord.me/blender-en-espanol" target="_blank">Blender en Español — Discord <span class="resource-badge">GRATIS</span></a>
+            <p>Comunidad hispanohablante de Blender para preguntas y feedback.</p>
+          </div></div>
+          <div class="resource-item"><div class="resource-icon">🎨</div><div class="resource-info">
+            <a href="https://www.facebook.com/campus.uy" target="_blank">Animation Campus — Animación 3D (pago)</a>
+            <p>Academia privada · Bulevar Artigas 1082, Montevideo. Verificar agenda 2026.</p>
+          </div></div>
+          <div class="resource-item"><div class="resource-icon">📖</div><div class="resource-info">
+            <a href="https://docs.blender.org/manual/en/latest/" target="_blank">Documentación oficial de Blender <span class="resource-badge">GRATIS</span></a>
+            <p>Manual completo para resolver dudas técnicas específicas.</p>
+          </div></div>
+        </div>
       </div>
     </div>
 
@@ -995,48 +961,16 @@ function exportMarkdown() {
 // ══════════════════════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════════════════════
-let isSignup = false;
-
-document.getElementById('authToggleBtn').addEventListener('click', () => {
-  isSignup = !isSignup;
-  document.getElementById('authTitle').textContent      = isSignup ? 'Crear cuenta' : 'Iniciar sesión';
-  document.getElementById('authSubmitBtn').textContent  = isSignup ? 'Registrarse'  : 'Entrar';
-  document.getElementById('authToggleText').textContent = isSignup ? '¿Ya tenés cuenta?' : '¿No tenés cuenta?';
-  document.getElementById('authToggleBtn').textContent  = isSignup ? 'Iniciar sesión'    : 'Registrate';
-  document.getElementById('authError').textContent      = '';
-});
-
-document.getElementById('authSubmitBtn').addEventListener('click', async () => {
-  const email    = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
-  const errorEl  = document.getElementById('authError');
-  if (!email || !password) { errorEl.textContent = 'Completá email y contraseña.'; return; }
-  const endpoint = isSignup ? '/api/auth/signup' : '/api/auth/login';
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-    if (!res.ok) { errorEl.textContent = data.error || 'Error al autenticar.'; return; }
-    showApp(data.email || email);
-  } catch (e) {
-    errorEl.textContent = 'Error de conexión.';
-  }
-});
-
-document.getElementById('authPassword').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('authSubmitBtn').click();
-});
-
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await fetch('/api/auth/logout', { method: 'POST' });
-  location.reload();
+  window.location.href = 'index.html';
 });
 
+function toggleResources() {
+  document.getElementById('resourcesAccordion').classList.toggle('open');
+}
+
 async function showApp(email) {
-  document.getElementById('authOverlay').classList.add('hidden');
   document.getElementById('userEmail').textContent = email;
   document.getElementById('app').classList.add('visible');
   document.getElementById('loadingScreen').classList.remove('hidden');
@@ -1058,12 +992,11 @@ async function showApp(email) {
     if (res.ok && data.email) {
       await showApp(data.email);
     } else {
-      document.getElementById('loadingScreen').classList.add('hidden');
-      document.getElementById('authOverlay').classList.remove('hidden');
+      // No autenticado → volver al login del Pomodoro
+      window.location.href = 'index.html';
     }
   } catch (e) {
-    document.getElementById('loadingScreen').classList.add('hidden');
-    document.getElementById('authOverlay').classList.remove('hidden');
+    window.location.href = 'index.html';
   }
 })();
 </script>
