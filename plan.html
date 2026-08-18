@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan Animación 3D — Blender</title>
+<link rel="manifest" href="manifest.json?v=2">
+<script>
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d2e;
+    --surface2: #242740;
+    --accent: #7c6af7;
+    --accent2: #5ee7c8;
+    --accent3: #f7c26a;
+    --text: #e8eaf6;
+    --muted: #8892b0;
+    --border: #2d3154;
+    --success: #4caf87;
+    --danger: #f06292;
+    --week1: #7c6af7;
+    --week2: #5ee7c8;
+    --week3: #f7c26a;
+    --week4: #f06292;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  /* ── AUTH OVERLAY ───────────────────────────────────────────────── */
+  .auth-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .auth-overlay.hidden { display: none; }
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 32px;
+    width: 100%; max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .auth-card h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+  .auth-card p.subtitle { font-size: 0.85rem; color: var(--muted); margin-bottom: 24px; }
+  .auth-card input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 12px 14px;
+    font-size: 0.9rem; margin-bottom: 12px; font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .auth-card input:focus { outline: none; border-color: var(--accent); }
+  .auth-submit {
+    width: 100%; background: var(--accent); color: #fff;
+    border: none; border-radius: 10px; padding: 12px;
+    font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .auth-submit:hover { background: #6a58e5; }
+  .auth-error { color: var(--danger); font-size: 0.82rem; margin-top: 10px; min-height: 18px; }
+  .auth-toggle { font-size: 0.83rem; color: var(--muted); margin-top: 16px; text-align: center; }
+  .auth-toggle button { background: none; border: none; color: var(--accent2); cursor: pointer; font-size: inherit; text-decoration: underline; }
+  .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+  .auth-logo-icon { font-size: 2rem; }
+  .auth-logo-text h1 { font-size: 1rem; font-weight: 700; }
+  .auth-logo-text p { font-size: 0.75rem; color: var(--muted); }
+
+  /* ── APP SHELL ──────────────────────────────────────────────────── */
+  .app { display: none; flex-direction: column; min-height: 100vh; }
+  .app.visible { display: flex; }
+
+  /* HEADER */
+  .header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 14px 24px; display: flex; align-items: center;
+    justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-link { text-decoration: none; color: var(--muted); font-size: 0.8rem; display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); padding: 5px 10px; border-radius: 8px; transition: all 0.2s; }
+  .logo-link:hover { border-color: var(--accent); color: var(--accent); }
+  .logo h1 { font-size: 1rem; font-weight: 700; color: var(--text); }
+  .logo p { font-size: 0.72rem; color: var(--muted); }
+  .progress-bar-wrap { flex: 1; min-width: 180px; max-width: 320px; }
+  .progress-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .progress-bar { background: var(--border); border-radius: 99px; height: 7px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 99px; transition: width 0.4s ease; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .user-email { font-size: 0.78rem; color: var(--muted); }
+  .btn-sm { padding: 7px 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); cursor: pointer; font-size: 0.78rem; transition: all 0.2s; }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* LAYOUT */
+  .layout { display: grid; grid-template-columns: 260px 1fr; flex: 1; min-height: 0; }
+  @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--surface); border-right: 1px solid var(--border);
+    padding: 16px; overflow-y: auto;
+  }
+  .week-group { margin-bottom: 20px; }
+  .week-label {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 6px 10px; border-radius: 6px; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .w1 .week-label { background: rgba(124,106,247,0.15); color: var(--week1); }
+  .w2 .week-label { background: rgba(94,231,200,0.15); color: var(--week2); }
+  .w3 .week-label { background: rgba(247,194,106,0.15); color: var(--week3); }
+  .w4 .week-label { background: rgba(240,98,146,0.15); color: var(--week4); }
+  .week-badge { font-size: 0.63rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 99px; }
+  .session-btn {
+    width: 100%; text-align: left; background: transparent; border: 1px solid transparent;
+    color: var(--muted); padding: 7px 10px; border-radius: 7px; cursor: pointer;
+    font-size: 0.82rem; margin-bottom: 3px; transition: all 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .session-btn:hover { background: var(--surface2); color: var(--text); }
+  .session-btn.active { background: var(--surface2); border-color: var(--accent); color: var(--text); }
+  .session-btn.done { color: var(--success); }
+  .s-num {
+    font-size: 0.68rem; background: var(--surface2); width: 22px; height: 22px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-weight: 700;
+  }
+  .session-btn.done .s-num { background: rgba(76,175,135,0.2); color: var(--success); }
+  .session-btn.active .s-num { background: var(--accent); color: #fff; }
+  .s-name { line-height: 1.3; flex: 1; }
+  .friday-tag { font-size: 0.58rem; background: rgba(247,194,106,0.2); color: var(--accent3); padding: 1px 5px; border-radius: 3px; flex-shrink: 0; }
+
+  /* MAIN */
+  .main { padding: 24px; overflow-y: auto; }
+  .main-inner { max-width: 860px; }
+
+  /* RESOURCES */
+  .resources-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px; margin-bottom: 24px;
+  }
+  .resources-panel h2 { font-size: 0.9rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .resource-list { display: flex; flex-direction: column; gap: 8px; }
+  .resource-item { background: var(--surface2); border-radius: 8px; padding: 10px 14px; display: flex; align-items: flex-start; gap: 10px; }
+  .resource-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+  .resource-info a { color: var(--accent2); font-size: 0.85rem; font-weight: 600; text-decoration: none; }
+  .resource-info a:hover { text-decoration: underline; }
+  .resource-info p { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .resource-badge { font-size: 0.63rem; padding: 2px 6px; border-radius: 99px; background: rgba(94,231,200,0.15); color: var(--accent2); font-weight: 700; margin-left: 5px; }
+
+  /* TODAY CARD */
+  .today-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px; margin-bottom: 24px;
+  }
+  .today-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tag { font-size: 0.7rem; padding: 3px 10px; border-radius: 99px; font-weight: 600; }
+  .tag-week { background: rgba(124,106,247,0.15); color: var(--accent); }
+  .tag-day { background: rgba(94,231,200,0.15); color: var(--accent2); }
+  .tag-duration { background: rgba(247,194,106,0.15); color: var(--accent3); }
+  .tag-friday { background: rgba(240,98,146,0.15); color: var(--danger); }
+  .tag-done { background: rgba(76,175,135,0.15); color: var(--success); }
+  .today-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; }
+  .today-objective { color: var(--muted); font-size: 0.88rem; }
+
+  /* POMODORO — 3 phases + cycle counter (matches original Pomodoro app style) */
+  .pomodoro-wrap { margin: 20px 0; }
+  .pomo-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .pomo-tab {
+    padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer;
+    font-size: 0.8rem; font-weight: 600; transition: all 0.2s;
+  }
+  .pomo-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pomo-tab.active.short { background: var(--accent2); border-color: var(--accent2); color: #1a1d2e; }
+  .pomo-tab.active.long { background: var(--success); border-color: var(--success); color: #fff; }
+  .pomodoro {
+    background: var(--surface2); border-radius: 14px; padding: 18px 22px;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  }
+  .pomo-left { display: flex; flex-direction: column; gap: 4px; }
+  .pomo-phase-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+  .pomo-time { font-size: 2.6rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); line-height: 1; }
+  .pomo-time.running { color: var(--accent2); }
+  .pomo-time.paused { color: var(--accent3); }
+  .pomo-cycle { font-size: 0.78rem; color: var(--accent3); font-weight: 600; }
+  .pomo-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 9px 18px; border-radius: 9px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6a58e5; }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { filter: brightness(1.1); }
+  .btn-muted { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); cursor: default; }
+
+  /* DETAILS */
+  .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  @media (max-width: 600px) { .details-grid { grid-template-columns: 1fr; } }
+  .detail-box { background: var(--surface2); border-radius: 12px; padding: 16px; }
+  .detail-box h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .detail-box p, .detail-box li { font-size: 0.87rem; color: var(--text); line-height: 1.65; }
+  .detail-box ul { padding-left: 16px; }
+  .detail-box li { margin-bottom: 4px; }
+  .detail-resource { color: var(--accent2) !important; text-decoration: none; }
+  .detail-resource:hover { text-decoration: underline; }
+  .check-pill { display: inline-block; background: rgba(76,175,135,0.12); color: var(--success); border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; margin-top: 4px; }
+  .alt-pill { display: inline-block; background: rgba(247,194,106,0.1); color: var(--accent3); border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; margin-top: 4px; }
+
+  /* LOG */
+  .log-section { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; }
+  .log-section h2 { font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; }
+  .log-field { margin-bottom: 14px; }
+  .log-field label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); display: block; margin-bottom: 6px; }
+  .log-field textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 9px; color: var(--text); padding: 10px 13px;
+    font-size: 0.87rem; resize: vertical; min-height: 68px;
+    font-family: inherit; transition: border-color 0.2s;
+  }
+  .log-field textarea:focus { outline: none; border-color: var(--accent); }
+  .log-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .saving-indicator { font-size: 0.75rem; color: var(--muted); }
+  .saving-indicator.ok { color: var(--success); }
+
+  /* HISTORY */
+  .history-section { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 20px; }
+  .history-section h2 { font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; }
+  .history-empty { color: var(--muted); font-size: 0.87rem; text-align: center; padding: 20px; background: var(--surface2); border-radius: 10px; }
+  .history-item { background: var(--surface2); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; border-left: 3px solid var(--accent); }
+  .history-item.done { border-left-color: var(--success); }
+  .history-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .history-date { font-size: 0.7rem; color: var(--muted); }
+  .history-snum { font-size: 0.7rem; font-weight: 700; color: var(--accent2); }
+  .history-status { font-size: 0.63rem; padding: 2px 7px; border-radius: 99px; }
+  .history-status.done { background: rgba(76,175,135,0.2); color: var(--success); }
+  .history-status.partial { background: rgba(247,194,106,0.2); color: var(--accent3); }
+  .history-title { font-size: 0.87rem; font-weight: 600; margin-bottom: 4px; }
+  .history-body { font-size: 0.81rem; color: var(--muted); }
+  .history-body strong { color: var(--text); }
+
+  /* EXPORT */
+  .btn-export {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); padding: 7px 13px; border-radius: 8px;
+    cursor: pointer; font-size: 0.78rem; transition: all 0.2s;
+  }
+  .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--success); color: #fff;
+    padding: 11px 18px; border-radius: 10px;
+    font-size: 0.86rem; font-weight: 600;
+    opacity: 0; transform: translateY(10px);
+    transition: all 0.3s; pointer-events: none; z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.error { background: var(--danger); }
+
+  /* LOADING */
+  .loading-screen {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 14px; z-index: 50;
+  }
+  .loading-screen.hidden { display: none; }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-screen p { color: var(--muted); font-size: 0.88rem; }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <p>Cargando tu plan...</p>
+</div>
+
+<!-- AUTH OVERLAY -->
+<div class="auth-overlay hidden" id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🎬</div>
+      <div class="auth-logo-text">
+        <h1>Plan Animación 3D</h1>
+        <p>Iniciá sesión para guardar tu progreso</p>
+      </div>
+    </div>
+    <h2 id="authTitle">Iniciar sesión</h2>
+    <p class="subtitle">Tu progreso se guarda automáticamente en la nube</p>
+    <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
+    <input type="password" id="authPassword" placeholder="Contraseña" autocomplete="current-password">
+    <button class="auth-submit" id="authSubmitBtn">Entrar</button>
+    <p class="auth-error" id="authError"></p>
+    <p class="auth-toggle">
+      <span id="authToggleText">¿No tenés cuenta?</span>
+      <button type="button" id="authToggleBtn">Registrate</button>
+    </p>
+    <p style="font-size:0.75rem;color:var(--muted);margin-top:14px;text-align:center">
+      <a href="index.html" style="color:var(--accent);text-decoration:none">← Volver al Pomodoro</a>
+    </p>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <a href="index.html" class="logo-link">← Pomodoro</a>
+      <div class="logo">
+        <div><b>🎬 Animación 3D con Blender</b></div>
+        <div style="font-size:0.72rem;color:var(--muted)">Plan 4 semanas · 🇺🇾 Uruguay · Gratis</div>
+      </div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressText">0 / 20</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+    <div class="header-right">
+      <button class="btn-export" onclick="exportMarkdown()">⬇ Exportar</button>
+      <span class="user-email" id="userEmail"></span>
+      <button class="btn-sm" id="logoutBtn">Log out</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar"></div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="main-inner" id="main-inner">
+        <div id="session-view"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// PLAN DATA
+// ══════════════════════════════════════════════════════════════
+const sessions = [
+  { id:1, week:1, day:1, isFriday:false,
+    title:"Interfaz + Modelado poligonal inorgánico",
+    objetivo:"Instalar Blender, dominar la interfaz y crear tu primer modelo inorgánico cuidando la topología básica.",
+    tarea:"Descargar Blender, explorar los paneles y modelar un objeto inorgánico simple (mesa, silla, cubo con detalles) cuidando que las caras sean cuadriláteros.",
+    pasos:["Descargar Blender 5.0 desde blender.org (gratis). Instalar.","Aprender atajos clave: G=mover, R=rotar, S=escalar + X/Y/Z para restringir eje. Tab=Edit Mode.","En Edit Mode: 1=vértices, 2=aristas, 3=caras. Herramientas: E(extrude), I(inset), Ctrl+R(loop cut).","Modelar una mesa: cubo → escalar en X/Y para el tablero → extruir 4 patas hacia abajo.","Verificar topología: las caras deben ser principalmente cuadriláteros (quads), no triángulos ni n-gons."],
+    recurso:{nombre:"Blender Studio — Blender Fundamentals 4.5 LTS (gratis, oficial)",url:"https://studio.blender.org/training/blender-fundamentals-45-lts/"},
+    resultado:"Un modelo inorgánico sencillo con topología limpia (quads), guardado como .blend.",
+    comprobacion:"Activá Overlays > Face Orientation: las caras deben verse azules (normales hacia afuera), no rojas.",
+    alternativa:"Si los atajos se complican, usá la barra de herramientas (T) para hacer las mismas operaciones con el mouse.",
+    duracion:"60-90 min" },
+  { id:2, week:1, day:2, isFriday:false,
+    title:"Modelado orgánico y topología para animación",
+    objetivo:"Entender edge flow y topología orgánica: cómo modelar formas suaves que se deformen bien al animar.",
+    tarea:"Modelar una cara/cabeza simple o una mano usando Subdivision Surface y controlando el flujo de aristas.",
+    pasos:["Agregar modificador Subdivision Surface (nivel 2) para ver el impacto del edge flow.","Aprender Edge Crease (Shift+E) para endurecer aristas específicas sin romper el suavizado.","Concepto clave: los edge loops deben seguir los contornos del músculo/forma que se va a deformar.","Modelar una forma esférica y 'tirarle' aristas para crear una nariz, boca o mano simple.","Usar el modificador Mirror para trabajar solo la mitad y que se refleje automáticamente."],
+    recurso:{nombre:"YouTube — 'Blender organic modeling topology for beginners'",url:"https://www.youtube.com/results?search_query=blender+organic+modeling+topology+beginners"},
+    resultado:"Una forma orgánica suavizada (cabeza o mano simple) con topología limpia.",
+    comprobacion:"Al activar Subdivision Surface nivel 3, la forma se suaviza sin que aparezcan pinches ni distorsiones.",
+    alternativa:"Modelá primero un limón o una manzana: formas simples que enseñan los mismos principios orgánicos.",
+    duracion:"60-90 min" },
+  { id:3, week:1, day:3, isFriday:false,
+    title:"Curvas, múltiples objetos, colecciones e instancias",
+    objetivo:"Aprender a modelar con curvas Bezier/NURBS y a organizar escenas con múltiples objetos usando colecciones e instancias.",
+    tarea:"Crear un camino/tubo con curvas, luego organizar una escena con varios objetos usando colecciones e instancias de objetos.",
+    pasos:["Shift+A > Curve > Bezier: crear una curva, editar sus puntos con G y las manijas con Alt+S para el grosor.","Convertir la curva a mesh (Object > Convert > Mesh) para seguir editando como polígono.","Crear colecciones: click derecho en Outliner > New Collection. Arrastrá objetos adentro.","Instancias: seleccioná un objeto, en Properties > Object Properties > Instancing > Faces o Verts para distribuir copias.","Diferencia entre instancia (linked, más liviana) y copia real (Alt+D vs Shift+D)."],
+    recurso:{nombre:"Blender Studio — Fundamentals: Curves & Collections",url:"https://studio.blender.org/training/blender-fundamentals-45-lts/"},
+    resultado:"Una escena organizada en colecciones con al menos un objeto usando instancias.",
+    comprobacion:"Al mover el objeto 'fuente' de una instancia, todas las copias se mueven junto con él.",
+    alternativa:"Saltá las instancias y enfocate solo en curvas + colecciones si el tiempo no alcanza.",
+    duracion:"60 min" },
+  { id:4, week:1, day:4, isFriday:false,
+    title:"Geometry Nodes: Scattering de objetos",
+    objetivo:"Introducción a los Geometry Nodes: aprender a distribuir/scatter objetos sobre una superficie.",
+    tarea:"Usar Geometry Nodes para distribuir árboles, piedras o flores sobre un plano de terreno.",
+    pasos:["Seleccioná un plano, ve a Properties > Modifier > Add Modifier > Geometry Nodes > New.","En el editor de Geometry Nodes: Add > Instances > Instance on Points.","Add > Geometry > Distribute Points on Faces para generar puntos de distribución.","Conectar: Geometry Input → Distribute Points → Instance on Points → Geometry Output.","En 'Instance' del nodo: elegí el objeto que querés dispersar. Ajustá Density para más/menos instancias."],
+    recurso:{nombre:"YouTube — 'Blender Geometry Nodes scatter objects beginners 2025'",url:"https://www.youtube.com/results?search_query=blender+geometry+nodes+scatter+objects+beginners+2025"},
+    resultado:"Un plano con objetos dispersos aleatoriamente usando Geometry Nodes.",
+    comprobacion:"Al cambiar el valor de Seed en Distribute Points, los objetos cambian de posición aleatoriamente.",
+    alternativa:"Usá el add-on gratuito 'Scatter' o hacelo manualmente con instancias si los nodos resultan difíciles.",
+    duracion:"60-90 min" },
+  { id:5, week:1, day:5, isFriday:true,
+    title:"INTEGRACIÓN S1: Sculpting — blocking, refinado y retopología",
+    objetivo:"Esculpir una forma base orgánica y hacer retopología básica para que sea apta para animación.",
+    tarea:"Esculpir una cabeza o criatura simple en Sculpt Mode y luego retopologizarla con la herramienta Poly Build.",
+    pasos:["Agregar una esfera UV, entrar en Sculpt Mode. Herramientas básicas: Draw, Grab, Smooth, Crease.","Activar Dyntopo (Dynamic Topology) en la barra lateral N para que la malla se subdivida al esculpir.","Hacer un blocking inicial: definir las formas grandes sin detalle (la forma general de una cabeza).","Para retopología: agregar un nuevo mesh vacío, activar Snap to Face (Overlay > Snap) y usar Poly Build para dibujar quads sobre la escultura.","El resultado es una malla limpia de baja densidad que envuelve la escultura de alta resolución."],
+    recurso:{nombre:"Blender Studio — Sculpting & Retopology training",url:"https://studio.blender.org/training/"},
+    resultado:"Una escultura básica + una retopología manual con 200-400 caras limpia.",
+    comprobacion:"La retopo envuelve la escultura sin intersecciones y tiene edge loops lógicos en ojos, boca y nariz.",
+    alternativa:"Omití la retopo manual y usá el modificador Remesh (Ctrl+R en Sculpt Mode) como solución rápida.",
+    duracion:"90-120 min" },
+  { id:6, week:2, day:1, isFriday:false,
+    title:"Shading: Shader Editor y nodos de materiales",
+    objetivo:"Dominar el Shader Editor para crear materiales realistas con el nodo Principled BSDF y mezcla de nodos.",
+    tarea:"Crear 3 materiales diferentes (plástico, metal, vidrio) usando nodos y conectarlos a objetos de la escena.",
+    pasos:["Abrir Shader Editor. El nodo Principled BSDF concentra todas las propiedades físicas.","Plástico: Base Color = color, Roughness = 0.5-0.8, Metallic = 0.","Metal: Metallic = 1, Roughness = 0.1-0.3, Base Color define el tinte.","Vidrio: Transmission = 1, Roughness = 0, IOR = 1.45. Requiere Cycles para verse bien.","Mix Shader: Shift+A > Shader > Mix Shader para mezclar dos materiales con una máscara."],
+    recurso:{nombre:"Blender Studio — Shading Fundamentals",url:"https://studio.blender.org/training/blender-fundamentals-45-lts/"},
+    resultado:"Tres objetos en escena con materiales distintos visualmente convincentes.",
+    comprobacion:"En Rendered Preview (Z > Rendered) cada material se distingue claramente del otro.",
+    alternativa:"Si el vidrio da problemas, reemplazalo por un material translúcido (Translucent BSDF).",
+    duracion:"60 min" },
+  { id:7, week:2, day:2, isFriday:false,
+    title:"UV Mapping: unwrap y proyecciones",
+    objetivo:"Entender el UV Unwrap para que las texturas se apliquen sin distorsión sobre modelos 3D.",
+    tarea:"Hacer el UV unwrap de un modelo (cubo con detalles o cabeza simple), colocar seams y verificar en el UV Editor.",
+    pasos:["En Edit Mode, seleccioná las aristas donde cortarás la malla (seams): Ctrl+E > Mark Seam.","Seleccioná todo (A) y U > Unwrap para abrir la malla en 2D.","Abrí el UV Editor para ver el resultado. Las islas deben ocupar bien el espacio sin superponerse.","Usá U > Smart UV Project para una solución rápida automática (menos control, más velocidad).","Exportar el UV map: UV Editor > UV > Export UV Layout para usarlo como guía en pintura."],
+    recurso:{nombre:"YouTube — 'UV Unwrapping Blender beginners guide 2025'",url:"https://www.youtube.com/results?search_query=uv+unwrapping+blender+beginners+2025"},
+    resultado:"Un modelo con UV map limpio visible en el UV Editor, listo para texturizar.",
+    comprobacion:"Aplicar una textura de cuadrados (checker) y que no se vea distorsionada ni estirada.",
+    alternativa:"Usar solo Smart UV Project si los seams manuales resultan confusos; funciona bien para objetos simples.",
+    duracion:"60-90 min" },
+  { id:8, week:2, day:3, isFriday:false,
+    title:"Texture Painting: pintar directamente sobre el modelo",
+    objetivo:"Usar Texture Paint mode para pintar colores, detalles y manchas directamente sobre la superficie 3D.",
+    tarea:"Pintar una textura de color sobre el modelo del día anterior usando Texture Paint.",
+    pasos:["Crear una nueva imagen en Image Editor (New > 2048x2048, nombre 'diffuse').","En el Shader Editor: agregar Image Texture node → cargar esa imagen → conectar a Base Color.","Cambiar al modo Texture Paint (modo arriba en la cabecera del viewport).","Herramientas: Draw, Fill, Smear, Clone. Ajustá tamaño (F), fuerza (Shift+F) y color.","Guardá la imagen pintada: Image Editor > Image > Save (Ctrl+S no guarda la imagen, solo el .blend)."],
+    recurso:{nombre:"YouTube — 'Blender texture painting beginner tutorial 2025'",url:"https://www.youtube.com/results?search_query=blender+texture+painting+tutorial+beginners+2025"},
+    resultado:"Un modelo con textura pintada a mano guardada como PNG.",
+    comprobacion:"La pintura se ve correctamente aplicada sobre el modelo en Material Preview sin distorsión.",
+    alternativa:"Usá texturas fotográficas de Poly Haven en vez de pintar si preferís un flujo más rápido.",
+    duracion:"60 min" },
+  { id:9, week:2, day:4, isFriday:false,
+    title:"Hair Grooming: sistemas de partículas y Hair Curves",
+    objetivo:"Crear peinados digitales usando el sistema de partículas Hair y el nuevo sistema Hair Curves de Blender.",
+    tarea:"Agregar cabello a un modelo de cabeza usando Hair Particle System y luego explorar Hair Curves para grooming.",
+    pasos:["Seleccioná la cabeza, ve a Properties > Particle Properties > + > Hair.","Ajustá: Number (cantidad de pelos), Length (largo), Segments. Activar Children para más volumen.","Modo Particle Edit: peinar el cabello con herramientas Comb, Smooth, Add, Cut.","Nuevo sistema (Blender 4+): Shift+A > Curve > Empty Hair → Add Hair Curves. Usar Sculpt Mode de Hair.","Agregar un material al cabello: Principled Hair BSDF para color, melanina y brillo realista."],
+    recurso:{nombre:"YouTube — 'Blender hair grooming tutorial 2025 Hair Curves'",url:"https://www.youtube.com/results?search_query=blender+hair+curves+grooming+tutorial+2025"},
+    resultado:"Un personaje o cabeza con cabello peinado y un material de hair aplicado.",
+    comprobacion:"En Rendered Preview el cabello se ve como filamentos individuales con volumen y brillo.",
+    alternativa:"Usar solo el sistema de partículas básico sin entrar en Hair Curves si el sistema nuevo resulta confuso.",
+    duracion:"60-90 min" },
+  { id:10, week:2, day:5, isFriday:true,
+    title:"INTEGRACIÓN S2: Iluminación, passes y composición digital",
+    objetivo:"Configurar iluminación profesional y separar el render en passes para composición.",
+    tarea:"Iluminar una escena con 3 luces + HDRI, activar render passes y componerlos en el Compositor de Blender.",
+    pasos:["Iluminación 3 puntos: Key Light (Area), Fill Light (débil, fría), Rim Light (contorno).","HDRI de Poly Haven como luz ambiental: World Properties > Background > Image Texture.","Activar passes: Render Properties > Passes > activar Diffuse, Specular, Shadow, Ambient Occlusion.","Renderizar y abrir el Compositor (Shift+F3 o Editor Type > Compositor). Activar 'Use Nodes'.","Usar nodo Render Layers + nodos Mix, ColorBalance y Glare para componer y mejorar el resultado final."],
+    recurso:{nombre:"YouTube — 'Blender render passes compositing tutorial 2025'",url:"https://www.youtube.com/results?search_query=blender+render+passes+compositing+beginners+2025"},
+    resultado:"Un render compuesto con passes separados, con glow y corrección de color aplicados.",
+    comprobacion:"Al cambiar el Mix del pass de AO en el Compositor, el resultado final cambia visualmente.",
+    alternativa:"Hacé solo el render básico con HDRI si el Compositor resulta abrumador; lo podés agregar después.",
+    duracion:"90-120 min" },
+  { id:11, week:3, day:1, isFriday:false,
+    title:"Rigging: armatures, huesos y skinning de personajes 3D",
+    objetivo:"Crear un esqueleto (armature) para un personaje 3D y vincularlo al mesh para que se deforme correctamente.",
+    tarea:"Agregar una armature a un personaje simple, crear la jerarquía de huesos y hacer el parenting con peso automático.",
+    pasos:["Shift+A > Armature > Single Bone. Entrar en Edit Mode de la armature para agregar más huesos.","E=extruir hueso hijo, Ctrl+P=establecer parent entre huesos. Nombrar huesos: pelvis, spine, head, arm.L, etc.","Usar X-Ray (Alt+Z) para ver la armature dentro del mesh.","Seleccionar primero el mesh, luego la armature (Shift+click), Ctrl+P > With Automatic Weights.","En Pose Mode (Ctrl+Tab): rotar huesos para ver la deformación. Corregir pesos en Weight Paint mode."],
+    recurso:{nombre:"Blender Studio — Rigging Fundamentals",url:"https://studio.blender.org/training/"},
+    resultado:"Un personaje simple con armature funcional que se deforma al mover los huesos.",
+    comprobacion:"En Pose Mode, rotar el brazo hace que el mesh del brazo se doble correctamente.",
+    alternativa:"Usar el add-on gratuito 'Rigify' (incluido en Blender) para generar un rig humano completo automáticamente.",
+    duracion:"60-90 min" },
+  { id:12, week:3, day:2, isFriday:false,
+    title:"Setup 3D/2D mixto y personajes cut-out con Grease Pencil",
+    objetivo:"Explorar la animación de personajes cut-out usando Grease Pencil y entornos 2.5D.",
+    tarea:"Crear un personaje cut-out 2D (partes del cuerpo separadas) y animarlo en un entorno 3D.",
+    pasos:["Shift+A > Grease Pencil > Blank. Dibujar partes del cuerpo (torso, brazo, pierna) en capas separadas.","Cada parte es un objeto Grease Pencil independiente; organizarlas en colecciones.","Agregar una armature al personaje Grease Pencil: igual que con meshes, Ctrl+P > With Automatic Weights.","Entorno 2.5D: mezclar objetos 3D de fondo (planos con texturas) con el personaje 2D de Grease Pencil.","Animar el personaje usando la armature: keyframes en Pose Mode para rotación de brazos y piernas."],
+    recurso:{nombre:"YouTube — 'Blender Grease Pencil cut-out animation 2D 2025'",url:"https://www.youtube.com/results?search_query=blender+grease+pencil+cutout+animation+2025"},
+    resultado:"Un personaje cut-out animado dando pasos o haciendo un gesto simple en escena 2.5D.",
+    comprobacion:"Al reproducir, el personaje 2D se mueve de forma articulada dentro del entorno 3D.",
+    alternativa:"Animar solo con keyframes directamente en los objetos Grease Pencil sin armature.",
+    duracion:"60-90 min" },
+  { id:13, week:3, day:3, isFriday:false,
+    title:"Animación de personajes 3D: walk cycle y refinado",
+    objetivo:"Animar un ciclo de caminata en un personaje 3D rigueado y refinar las curvas en el Graph Editor.",
+    tarea:"Crear un walk cycle básico de 24 frames que se pueda hacer loop, usando un rig existente.",
+    pasos:["Usar un rig descargado de Blender Studio (Blender Cloud characters, gratuitos) o el de la sesión anterior.","Un walk cycle tiene 4 poses clave: contacto, abajo, paso, arriba. Repetir en espejo para el otro lado.","Frame 1=contacto derecha, Frame 7=abajo, Frame 13=contacto izquierda, Frame 19=abajo, Frame 24=igual al 1.","En Graph Editor: revisar curvas del IK de los pies y corregir sliding (pies que 'patinen').","Copiar y pegar la acción en el NLA Editor para que el personaje camine en loop infinito."],
+    recurso:{nombre:"Blender Studio — Animation Fundamentals: Walk Cycle",url:"https://studio.blender.org/training/animation-fundamentals/"},
+    resultado:"Un walk cycle de 24 frames que se ve natural al reproducir en loop.",
+    comprobacion:"El frame 1 y el frame 25 son idénticos: al poner en loop no hay salto visible.",
+    alternativa:"Animar solo 2 poses (pie derecho adelante / pie izquierdo adelante) como punto de partida.",
+    duracion:"60-90 min" },
+  { id:14, week:3, day:4, isFriday:false,
+    title:"NLA Editor: reutilización y combinación de acciones",
+    objetivo:"Usar el NLA Editor para combinar, reutilizar y mezclar acciones de animación.",
+    tarea:"Combinar el walk cycle con una acción de saludo usando el NLA Editor.",
+    pasos:["En el Action Editor: crear una segunda acción llamada 'saludo' (el personaje levanta la mano).","Abrir el NLA Editor (Shift+F12 o Editor Type > NLA Editor).","Push Down la acción del walk cycle y la del saludo para convertirlas en NLA strips.","Mover los strips en el tiempo para que el saludo ocurra en el medio de la caminata.","Blend In/Out: ajustar el inicio y fin de cada strip para que la transición sea suave."],
+    recurso:{nombre:"YouTube — 'Blender NLA Editor combine actions tutorial 2025'",url:"https://www.youtube.com/results?search_query=blender+NLA+editor+combine+actions+tutorial+2025"},
+    resultado:"El personaje camina y en un punto hace el saludo sin interrumpir la caminata.",
+    comprobacion:"Al reproducir, la transición entre walk cycle y saludo no produce un 'salto' brusco.",
+    alternativa:"Hacer la animación completa en una sola acción larga sin usar NLA si resulta más claro.",
+    duracion:"60 min" },
+  { id:15, week:3, day:5, isFriday:true,
+    title:"INTEGRACIÓN S3: Simulaciones físicas — tela, cuerpo rígido y fluidos",
+    objetivo:"Configurar simulaciones físicas básicas: tela cayendo, objetos rebotando y fluido simple.",
+    tarea:"Crear tres simulaciones en la misma escena: tela sobre objeto, bolas rebotando y un chorro de agua simple.",
+    pasos:["Tela: agregar un plano, Properties > Physics > Cloth. Agregar un cubo como colisionador (Physics > Collision). Reproducir.","Cuerpo rígido: seleccionar esferas, Physics > Rigid Body > Active. El suelo: Rigid Body > Passive. Reproducir.","Fluido (Mantaflow): agregar un dominio cúbico (Physics > Fluid > Domain), un emisor (Fluid > Flow) y un obstáculo (Fluid > Effector). Bake.","Integración con personaje: aplicar Physics > Cloth a la ropa del personaje rigueado + Cloth Pinning en el grupo de vértices del torso.","Cachear todas las simulaciones (Bake) antes de renderizar."],
+    recurso:{nombre:"YouTube — 'Blender physics simulation beginner tutorial 2025'",url:"https://www.youtube.com/results?search_query=blender+cloth+rigid+body+fluid+simulation+beginner+2025"},
+    resultado:"Tres simulaciones físicas funcionando en la misma escena.",
+    comprobacion:"Al reproducir, la tela cae naturalmente, las bolas rebotan y el fluido fluye.",
+    alternativa:"Hacé solo la simulación de tela, que es la más rápida de configurar y la más usada en personajes.",
+    duracion:"90-120 min" },
+  { id:16, week:4, day:1, isFriday:false,
+    title:"Render final: Cycles, EEVEE y configuración de salida",
+    objetivo:"Entender las diferencias entre los motores de render y configurar la salida profesional para animación.",
+    tarea:"Comparar un mismo frame en Cycles vs EEVEE y configurar el output para una animación final.",
+    pasos:["Render Properties: cambiar entre Cycles y EEVEE y comparar calidad vs velocidad con F12.","Cycles: aumentar Samples a 128, activar Denoising (OptiX si tenés GPU NVIDIA, OpenImageDenoise si no).","EEVEE: activar Ambient Occlusion, Bloom y Screen Space Reflections para más realismo.","Output Properties: resolución 1920x1080, Frame Rate 24fps, formato FFmpeg/H.264 para video.","Elegir carpeta de salida, verificar Frame Range y renderizar con Ctrl+F12."],
+    recurso:{nombre:"Blender Studio — Render & Output settings",url:"https://studio.blender.org/training/blender-fundamentals-45-lts/"},
+    resultado:"Un render comparativo Cycles vs EEVEE y la configuración de output lista para el proyecto final.",
+    comprobacion:"El archivo de video MP4 se genera correctamente en la carpeta elegida.",
+    alternativa:"Usar solo EEVEE si la PC no tiene GPU dedicada; el resultado sigue siendo excelente para principiante.",
+    duracion:"60 min" },
+  { id:17, week:4, day:2, isFriday:false,
+    title:"Layout y organización de assets para producción",
+    objetivo:"Aprender a organizar una escena de producción: asset library, linked objects y naming conventions.",
+    tarea:"Reorganizar el proyecto final usando colecciones, linked libraries y una convención de nombres consistente.",
+    pasos:["Naming conventions: objeto_nombre.tipo (ej: char_hero.mesh, light_key.area, cam_main.camera).","Colecciones: separar en /Characters, /Environment, /Lights, /Cameras, /FX.","Asset Library: marcar objetos como assets (click derecho > Mark as Asset) para reutilizarlos en otros proyectos.","Linked Libraries: File > Link para traer objetos de otro .blend sin duplicar datos.","Outliner: usar los filtros de visibilidad (ojo, cursor, render) para gestionar qué se ve/renderiza."],
+    recurso:{nombre:"Blender Studio — Asset Library & Production organization",url:"https://studio.blender.org/training/"},
+    resultado:"El proyecto organizado con colecciones nombradas, assets marcados y naming consistente.",
+    comprobacion:"Podés encontrar cualquier objeto en el Outliner en menos de 5 segundos buscando por su nombre.",
+    alternativa:"Enfocate solo en la organización por colecciones sin entrar en Linked Libraries todavía.",
+    duracion:"60 min" },
+  { id:18, week:4, day:3, isFriday:false,
+    title:"Proyecto final: construir y animar la escena",
+    objetivo:"Integrar todo lo aprendido en una escena animada corta con personaje, entorno y efectos.",
+    tarea:"Modelar o adaptar los assets del proyecto final, aplicar materiales, rig y comenzar la animación.",
+    pasos:["Definir la idea del proyecto: una escena de 5-10 segundos con al menos un personaje animado.","Ensamblar los assets: personaje (de sesiones anteriores o descargado de Blender Studio characters).","Aplicar materiales y texturas a todos los objetos de la escena.","Animar: walk cycle del personaje + al menos una acción secundaria (saludar, mirar, saltar).","Render estático de prueba (F12) para verificar composición e iluminación."],
+    recurso:{nombre:"Blender Studio — Characters & Assets (gratuitos para descargar)",url:"https://studio.blender.org/characters/"},
+    resultado:"Escena con personaje animado, materiales y luces lista para render final.",
+    comprobacion:"Al reproducir en viewport la animación completa no hay errores visibles ni interpenetraciones.",
+    alternativa:"Usar un personaje pre-hecho de Blender Studio (Suzanne, Rain, etc.) para ahorrar tiempo de modelado.",
+    duracion:"60-90 min" },
+  { id:19, week:4, day:4, isFriday:false,
+    title:"Proyecto final: simulaciones, passes y composición",
+    objetivo:"Agregar simulaciones físicas al proyecto, renderizar por passes y componer el resultado final.",
+    tarea:"Añadir al menos una simulación (tela de ropa), renderizar con passes activados y componer en el Compositor.",
+    pasos:["Agregar simulación de tela a la ropa del personaje con Pinning en el grupo de vértices del torso.","Bake la simulación para toda la duración de la animación.","Activar passes en Render Properties: Diffuse, Specular, Shadow, AO, Cryptomatte.","En el Compositor: conectar los passes con nodos de color, Glare (para brillos) y Vignette.","Renderizar la animación completa: Ctrl+F12. Guardar el proyecto."],
+    recurso:{nombre:"YouTube — 'Blender compositing render passes animation final 2025'",url:"https://www.youtube.com/results?search_query=blender+compositing+render+passes+animation+2025"},
+    resultado:"Animación final con simulación de tela y composición de passes aplicada.",
+    comprobacion:"El video renderizado incluye el efecto de la composición (glow, color grading) visible.",
+    alternativa:"Omitir la simulación de tela y componer solo el render básico con color correction.",
+    duracion:"60-90 min" },
+  { id:20, week:4, day:5, isFriday:true,
+    title:"RENDER FINAL, portfolio y próximos pasos",
+    objetivo:"Renderizar el proyecto completo, preparar el portfolio y planificar la especialización siguiente.",
+    tarea:"Render final, revisión crítica del trabajo, subir a la comunidad y definir el camino a seguir.",
+    pasos:["Render Animation final (Ctrl+F12). Mientras renderiza, revisá todo el historial del plan.","Revisión crítica: ¿qué técnica de las 12 te resultó más interesante? ¿Cuál fue la más difícil?","Subir el resultado al Discord de Blender en Español o a Blender Artists para recibir feedback.","Portfolio: guardar el .blend, el video final y al menos un render de alta calidad en una carpeta dedicada.","Próximos pasos: elegir especialización — Personajes (Rigify avanzado), Motion Graphics (Geometry Nodes), Videojuegos (Godot/Unity), VFX (Compositor, VDB)."],
+    recurso:{nombre:"Blender Artists Community — compartir tu trabajo y recibir feedback",url:"https://blenderartists.org/"},
+    resultado:"Video final renderizado + carpeta de portfolio organizada + próxima especialización definida.",
+    comprobacion:"Tenés un video que podés mostrar a cualquier persona y explicar cada técnica que usaste para hacerlo.",
+    alternativa:"Si el render está incompleto, exportar el mejor fragmento como showreel de 10-15 segundos.",
+    duracion:"120 min" }
+];
+
+const weekColors = { 1:'#7c6af7', 2:'#5ee7c8', 3:'#f7c26a', 4:'#f06292' };
+const weekNames  = { 1:"Semana 1 — Modelado y Sculpting", 2:"Semana 2 — Shading, UV y Cabello", 3:"Semana 3 — Rigging y Animación", 4:"Semana 4 — Producción y Render" };
+const dayNames   = ["","Lunes","Martes","Miércoles","Jueves","Viernes"];
+
+// ══════════════════════════════════════════════════════════════
+// STATE (cloud-backed; no localStorage)
+// ══════════════════════════════════════════════════════════════
+let state = {
+  currentSession: 1,
+  progress: {}  // keyed by session_id → { completed, notes_done, notes_block, notes_next, pomodoros, updated_at }
+};
+
+async function loadProgress() {
+  const res = await fetch('/api/plan');
+  if (!res.ok) return;
+  const data = await res.json();
+  (data.sessions || []).forEach(row => {
+    state.progress[row.session_id] = row;
+  });
+}
+
+let saveTimer = null;
+function scheduleSave(sessionId) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => saveSession(sessionId), 1200);
+}
+
+async function saveSession(sessionId) {
+  const log = state.progress[sessionId] || {};
+  setSavingIndicator('saving');
+  try {
+    const res = await fetch(`/api/plan/${sessionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        completed:   log.completed   ?? false,
+        notes_done:  log.notes_done  ?? '',
+        notes_block: log.notes_block ?? '',
+        notes_next:  log.notes_next  ?? '',
+        pomodoros:   log.pomodoros   ?? 0
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      state.progress[sessionId] = data.session;
+      setSavingIndicator('ok');
+    } else {
+      setSavingIndicator('error');
+    }
+  } catch (e) {
+    setSavingIndicator('error');
+  }
+}
+
+function setSavingIndicator(status) {
+  const el = document.getElementById('saving-indicator');
+  if (!el) return;
+  if (status === 'saving') { el.textContent = '⏳ Guardando...'; el.className = 'saving-indicator'; }
+  else if (status === 'ok') { el.textContent = '✓ Guardado'; el.className = 'saving-indicator ok'; }
+  else { el.textContent = '⚠ Error al guardar'; el.className = 'saving-indicator'; }
+}
+
+// ══════════════════════════════════════════════════════════════
+// POMODORO — 3 phases + cycle counter
+// ══════════════════════════════════════════════════════════════
+const PHASES = [
+  { key: 'focus',  label: 'Focus',       minutes: 25, tabClass: '' },
+  { key: 'short',  label: 'Short Break', minutes: 5,  tabClass: 'short' },
+  { key: 'long',   label: 'Long Break',  minutes: 15, tabClass: 'long' }
+];
+let pomoPhase     = 0;   // 0=focus, 1=short, 2=long
+let pomoRemaining = PHASES[0].minutes * 60;
+let pomoRunning   = false;
+let pomoInterval  = null;
+let pomoCycle     = 1;   // which focus block in a set of 4
+let pomoFocusDone = 0;   // total focus sessions completed
+
+function getPomoKey() { return `pomo_${state.currentSession}`; }
+
+function switchPhase(idx) {
+  clearInterval(pomoInterval);
+  pomoRunning = false;
+  pomoPhase = idx;
+  pomoRemaining = PHASES[idx].minutes * 60;
+  updatePomoUI();
+}
+
+function updatePomoUI() {
+  const m = Math.floor(pomoRemaining / 60).toString().padStart(2,'0');
+  const s = (pomoRemaining % 60).toString().padStart(2,'0');
+  const timeEl = document.getElementById('pomo-time');
+  if (!timeEl) return;
+  timeEl.textContent = `${m}:${s}`;
+  timeEl.className = 'pomo-time' + (pomoRunning ? ' running' : pomoRemaining < PHASES[pomoPhase].minutes*60 ? ' paused' : '');
+  const cycleEl = document.getElementById('pomo-cycle');
+  if (cycleEl) cycleEl.textContent = `Pomodoro ${pomoCycle} de 4`;
+  // Update tab buttons
+  PHASES.forEach((p, i) => {
+    const tab = document.getElementById(`pomo-tab-${i}`);
+    if (tab) tab.className = 'pomo-tab' + (i === pomoPhase ? ` active ${p.tabClass}` : ` ${p.tabClass}`);
+  });
+}
+
+function startPomo() {
+  if (pomoRunning) return;
+  pomoRunning = true;
+  updatePomoUI();
+  pomoInterval = setInterval(() => {
+    pomoRemaining--;
+    updatePomoUI();
+    if (pomoRemaining <= 0) {
+      clearInterval(pomoInterval);
+      pomoRunning = false;
+      if (pomoPhase === 0) {
+        // Completed a focus session
+        pomoFocusDone++;
+        const row = state.progress[state.currentSession] || {};
+        row.pomodoros = (row.pomodoros || 0) + 1;
+        state.progress[state.currentSession] = row;
+        saveSession(state.currentSession);
+        showToast('¡Pomodoro completado! 🍅 Tomá un descanso.');
+        // Auto-advance: every 4 focus → long break, otherwise short break
+        if (pomoCycle >= 4) {
+          pomoCycle = 1;
+          switchPhase(2); // long break
+        } else {
+          pomoCycle++;
+          switchPhase(1); // short break
+        }
+      } else {
+        showToast('Descanso terminado. ¡A trabajar! 🎬');
+        switchPhase(0); // back to focus
+      }
+    }
+  }, 1000);
+}
+
+function pausePomo() {
+  if (!pomoRunning) return;
+  clearInterval(pomoInterval);
+  pomoRunning = false;
+  updatePomoUI();
+}
+
+function resetPomo() {
+  clearInterval(pomoInterval);
+  pomoRunning = false;
+  pomoRemaining = PHASES[pomoPhase].minutes * 60;
+  updatePomoUI();
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════
+function countDone() {
+  return sessions.filter(s => state.progress[s.id]?.completed).length;
+}
+
+function updateProgress() {
+  const done = countDone();
+  const pct  = Math.round((done / 20) * 100);
+  const fill = document.getElementById('progressFill');
+  const txt  = document.getElementById('progressText');
+  if (fill) fill.style.width = pct + '%';
+  if (txt)  txt.textContent  = `${done} / 20 (${pct}%)`;
+}
+
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  let html = '';
+  for (let w = 1; w <= 4; w++) {
+    const wSessions = sessions.filter(s => s.week === w);
+    const doneInWeek = wSessions.filter(s => state.progress[s.id]?.completed).length;
+    html += `<div class="week-group w${w}">
+      <div class="week-label">${weekNames[w]} <span class="week-badge">${doneInWeek}/${wSessions.length}</span></div>`;
+    wSessions.forEach(s => {
+      const isDone   = !!state.progress[s.id]?.completed;
+      const isActive = state.currentSession === s.id;
+      const shortTitle = s.title.length > 38 ? s.title.substring(0,38)+'…' : s.title;
+      html += `<button class="session-btn${isDone?' done':''}${isActive?' active':''}" onclick="goSession(${s.id})">
+        <span class="s-num">${isDone ? '✓' : s.id}</span>
+        <span class="s-name">${shortTitle}</span>
+        ${s.isFriday ? '<span class="friday-tag">🎬</span>' : ''}
+      </button>`;
+    });
+    html += '</div>';
+  }
+  sb.innerHTML = html;
+}
+
+function renderSession(id) {
+  const s      = sessions.find(x => x.id === id);
+  if (!s) return;
+  const log    = state.progress[id] || {};
+  const isDone = !!log.completed;
+  const color  = weekColors[s.week];
+  const stepsHtml = s.pasos.map(p => `<li>${p}</li>`).join('');
+
+  // Reset pomodoro to focus phase when switching sessions
+  clearInterval(pomoInterval);
+  pomoRunning   = false;
+  pomoPhase     = 0;
+  pomoRemaining = PHASES[0].minutes * 60;
+  pomoCycle     = 1;
+
+  document.getElementById('session-view').innerHTML = `
+    <!-- RESOURCES -->
+    <div class="resources-panel">
+      <h2>📚 Recursos del plan (todos gratuitos salvo Animation Campus)</h2>
+      <div class="resource-list">
+        <div class="resource-item"><div class="resource-icon">🟠</div><div class="resource-info">
+          <a href="https://www.blenderguru.com/" target="_blank">Blender Guru — Tutorial Donut 5.0 <span class="resource-badge">GRATIS</span></a>
+          <p>El tutorial de referencia para principiantes. Cubre modelado, materiales, iluminación y render.</p>
+        </div></div>
+        <div class="resource-item"><div class="resource-icon">🔵</div><div class="resource-info">
+          <a href="https://studio.blender.org/training/" target="_blank">Blender Studio Training <span class="resource-badge">GRATIS</span></a>
+          <p>Cursos oficiales de la Fundación Blender: Animation Fundamentals, Fundamentals 4.5 LTS y más.</p>
+        </div></div>
+        <div class="resource-item"><div class="resource-icon">🌍</div><div class="resource-info">
+          <a href="https://polyhaven.com/" target="_blank">Poly Haven — Texturas, HDRIs y modelos <span class="resource-badge">GRATIS</span></a>
+          <p>Biblioteca de assets 3D 100% gratuita y sin licencias.</p>
+        </div></div>
+        <div class="resource-item"><div class="resource-icon">💬</div><div class="resource-info">
+          <a href="https://discord.me/blender-en-espanol" target="_blank">Blender en Español — Discord <span class="resource-badge">GRATIS</span></a>
+          <p>Comunidad hispanohablante de Blender para preguntas y feedback.</p>
+        </div></div>
+        <div class="resource-item"><div class="resource-icon">🎨</div><div class="resource-info">
+          <a href="https://www.facebook.com/campus.uy" target="_blank">Animation Campus — Animación 3D (pago)</a>
+          <p>Academia privada · Bulevar Artigas 1082, Montevideo. Verificar agenda 2026.</p>
+        </div></div>
+        <div class="resource-item"><div class="resource-icon">📖</div><div class="resource-info">
+          <a href="https://docs.blender.org/manual/en/latest/" target="_blank">Documentación oficial de Blender <span class="resource-badge">GRATIS</span></a>
+          <p>Manual completo para resolver dudas técnicas específicas.</p>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- SESSION CARD -->
+    <div class="today-card">
+      <div class="today-meta">
+        <span class="tag" style="background:${color}22;color:${color}">Semana ${s.week}</span>
+        <span class="tag tag-day">${dayNames[s.day]}</span>
+        <span class="tag tag-duration">⏱ ${s.duracion}</span>
+        ${s.isFriday ? '<span class="tag tag-friday">🎬 Integración</span>' : ''}
+        ${isDone ? '<span class="tag tag-done">✓ Completada</span>' : ''}
+      </div>
+      <div class="today-title">Sesión ${s.id}: ${s.title}</div>
+      <div class="today-objective">🎯 ${s.objetivo}</div>
+
+      <!-- POMODORO -->
+      <div class="pomodoro-wrap">
+        <div class="pomo-tabs">
+          <button id="pomo-tab-0" class="pomo-tab active" onclick="switchPhase(0)">Focus</button>
+          <button id="pomo-tab-1" class="pomo-tab short" onclick="switchPhase(1)">Short Break</button>
+          <button id="pomo-tab-2" class="pomo-tab long"  onclick="switchPhase(2)">Long Break</button>
+        </div>
+        <div class="pomodoro">
+          <div class="pomo-left">
+            <div class="pomo-phase-label" id="pomo-phase-label">Focus</div>
+            <div id="pomo-time" class="pomo-time">25:00</div>
+            <div id="pomo-cycle" class="pomo-cycle">Pomodoro 1 de 4</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">🍅 ${log.pomodoros || 0} completados en esta sesión</div>
+          </div>
+          <div class="pomo-btns">
+            <button class="btn btn-primary" onclick="startPomo()">▶ Start</button>
+            <button class="btn btn-secondary" onclick="pausePomo()">⏸ Pause</button>
+            <button class="btn btn-secondary" onclick="resetPomo()">↺ Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETAILS -->
+      <div class="details-grid">
+        <div class="detail-box">
+          <h3>📋 Tarea principal</h3>
+          <p>${s.tarea}</p>
+        </div>
+        <div class="detail-box">
+          <h3>🔗 Recurso de esta sesión</h3>
+          <p><a href="${s.recurso.url}" target="_blank" class="detail-resource">${s.recurso.nombre}</a></p>
+        </div>
+        <div class="detail-box" style="grid-column:1/-1">
+          <h3>🪜 Pasos concretos</h3>
+          <ul>${stepsHtml}</ul>
+        </div>
+        <div class="detail-box">
+          <h3>✅ Resultado esperado</h3>
+          <p>${s.resultado}</p>
+        </div>
+        <div class="detail-box">
+          <h3>🧪 Comprobación</h3>
+          <p class="check-pill">${s.comprobacion}</p>
+        </div>
+        <div class="detail-box" style="grid-column:1/-1">
+          <h3>🔀 Alternativa si me bloqueo</h3>
+          <p class="alt-pill">${s.alternativa}</p>
+        </div>
+      </div>
+
+      <!-- LOG -->
+      <div class="log-section">
+        <h2>📝 Registro de esta sesión</h2>
+        <div class="log-field">
+          <label>¿Qué hiciste hoy?</label>
+          <textarea id="log-done" placeholder="Describí qué completaste en esta sesión..."
+            oninput="onLogInput()">${log.notes_done || ''}</textarea>
+        </div>
+        <div class="log-field">
+          <label>Bloqueos y dudas</label>
+          <textarea id="log-block" placeholder="¿En qué te trabaste? ¿Qué quedó pendiente?"
+            oninput="onLogInput()">${log.notes_block || ''}</textarea>
+        </div>
+        <div class="log-field">
+          <label>Próxima acción</label>
+          <textarea id="log-next" placeholder="¿Qué vas a hacer en la próxima sesión?" style="min-height:50px"
+            oninput="onLogInput()">${log.notes_next || ''}</textarea>
+        </div>
+        <div class="log-actions">
+          <button class="btn btn-secondary" onclick="saveNow()">💾 Guardar</button>
+          ${!isDone
+            ? `<button class="btn btn-success" onclick="markDone(${s.id})">✅ Marcar completada</button>`
+            : `<button class="btn btn-muted" disabled>✓ Ya completada</button>`}
+          ${id < 20 ? `<button class="btn btn-secondary" onclick="goSession(${id+1})">→ Siguiente</button>` : ''}
+          <span class="saving-indicator" id="saving-indicator"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="history-section">
+      <h2>📅 Historial de sesiones</h2>
+      ${renderHistory()}
+    </div>
+  `;
+
+  updatePomoUI();
+}
+
+function renderHistory() {
+  const entries = sessions
+    .map(s => ({ s, log: state.progress[s.id] }))
+    .filter(({ log }) => log && (log.notes_done || log.notes_block || log.completed));
+  if (entries.length === 0) {
+    return '<div class="history-empty">Todavía no hay sesiones registradas. ¡Empezá tu primera sesión!</div>';
+  }
+  return entries.reverse().map(({ s, log }) => {
+    const date = log.updated_at ? new Date(log.updated_at).toLocaleDateString('es-UY') : '—';
+    return `<div class="history-item ${log.completed ? 'done' : ''}">
+      <div class="history-meta">
+        <span class="history-date">📅 ${date}</span>
+        <span class="history-snum">Sesión ${s.id}</span>
+        <span class="history-status ${log.completed ? 'done' : 'partial'}">${log.completed ? '✓ Completada' : '⏳ En progreso'}</span>
+        ${log.pomodoros ? `<span style="font-size:0.68rem;color:var(--accent3)">🍅 ${log.pomodoros}</span>` : ''}
+      </div>
+      <div class="history-title">${s.title}</div>
+      <div class="history-body">
+        ${log.notes_done  ? `<p><strong>Hice:</strong> ${log.notes_done}</p>` : ''}
+        ${log.notes_block ? `<p><strong>Bloqueo:</strong> ${log.notes_block}</p>` : ''}
+        ${log.notes_next  ? `<p><strong>Próximo:</strong> ${log.notes_next}</p>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════════════════════════
+function onLogInput() {
+  const sid = state.currentSession;
+  if (!state.progress[sid]) state.progress[sid] = {};
+  state.progress[sid].notes_done  = document.getElementById('log-done')?.value  || '';
+  state.progress[sid].notes_block = document.getElementById('log-block')?.value || '';
+  state.progress[sid].notes_next  = document.getElementById('log-next')?.value  || '';
+  setSavingIndicator('saving');
+  scheduleSave(sid);
+}
+
+function saveNow() {
+  const sid = state.currentSession;
+  if (!state.progress[sid]) state.progress[sid] = {};
+  state.progress[sid].notes_done  = document.getElementById('log-done')?.value  || '';
+  state.progress[sid].notes_block = document.getElementById('log-block')?.value || '';
+  state.progress[sid].notes_next  = document.getElementById('log-next')?.value  || '';
+  saveSession(sid).then(() => showToast('Nota guardada ✓'));
+}
+
+function markDone(id) {
+  saveNow();
+  if (!state.progress[id]) state.progress[id] = {};
+  state.progress[id].completed = true;
+  state.progress[id].notes_done  = document.getElementById('log-done')?.value  || '';
+  state.progress[id].notes_block = document.getElementById('log-block')?.value || '';
+  state.progress[id].notes_next  = document.getElementById('log-next')?.value  || '';
+  saveSession(id).then(() => {
+    updateProgress();
+    renderSidebar();
+    renderSession(id);
+    showToast('¡Sesión completada! 🎉');
+  });
+}
+
+function goSession(id) {
+  state.currentSession = id;
+  renderSidebar();
+  renderSession(id);
+  document.querySelector('.main').scrollTop = 0;
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+function exportMarkdown() {
+  const lines = ['# Plan Animación 3D — Uruguay', '', '## Historial de sesiones', ''];
+  sessions.forEach(s => {
+    const log = state.progress[s.id];
+    if (!log && !log?.completed) return;
+    lines.push(`### Sesión ${s.id}: ${s.title}`);
+    lines.push(`- **Estado:** ${log.completed ? 'Completada ✓' : 'En progreso'}`);
+    if (log.updated_at) lines.push(`- **Fecha:** ${new Date(log.updated_at).toLocaleDateString('es-UY')}`);
+    if (log.pomodoros)  lines.push(`- **Pomodoros:** ${log.pomodoros} 🍅`);
+    if (log.notes_done)  lines.push(`- **Hice:** ${log.notes_done}`);
+    if (log.notes_block) lines.push(`- **Bloqueo:** ${log.notes_block}`);
+    if (log.notes_next)  lines.push(`- **Próximo:** ${log.notes_next}`);
+    lines.push('');
+  });
+  lines.push('---');
+  lines.push(`*Exportado el ${new Date().toLocaleDateString('es-UY')} — Plan Animación 3D Uruguay*`);
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'historial-animacion3d.md';
+  a.click();
+  showToast('Historial exportado ✓');
+}
+
+// ══════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════
+let isSignup = false;
+
+document.getElementById('authToggleBtn').addEventListener('click', () => {
+  isSignup = !isSignup;
+  document.getElementById('authTitle').textContent      = isSignup ? 'Crear cuenta' : 'Iniciar sesión';
+  document.getElementById('authSubmitBtn').textContent  = isSignup ? 'Registrarse'  : 'Entrar';
+  document.getElementById('authToggleText').textContent = isSignup ? '¿Ya tenés cuenta?' : '¿No tenés cuenta?';
+  document.getElementById('authToggleBtn').textContent  = isSignup ? 'Iniciar sesión'    : 'Registrate';
+  document.getElementById('authError').textContent      = '';
+});
+
+document.getElementById('authSubmitBtn').addEventListener('click', async () => {
+  const email    = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errorEl  = document.getElementById('authError');
+  if (!email || !password) { errorEl.textContent = 'Completá email y contraseña.'; return; }
+  const endpoint = isSignup ? '/api/auth/signup' : '/api/auth/login';
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { errorEl.textContent = data.error || 'Error al autenticar.'; return; }
+    showApp(data.email || email);
+  } catch (e) {
+    errorEl.textContent = 'Error de conexión.';
+  }
+});
+
+document.getElementById('authPassword').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('authSubmitBtn').click();
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  location.reload();
+});
+
+async function showApp(email) {
+  document.getElementById('authOverlay').classList.add('hidden');
+  document.getElementById('userEmail').textContent = email;
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('loadingScreen').classList.remove('hidden');
+  document.getElementById('loadingScreen').querySelector('p').textContent = 'Cargando tu progreso...';
+  await loadProgress();
+  document.getElementById('loadingScreen').classList.add('hidden');
+  updateProgress();
+  renderSidebar();
+  renderSession(state.currentSession);
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+(async () => {
+  try {
+    const res  = await fetch('/api/auth/me');
+    const data = await res.json();
+    if (res.ok && data.email) {
+      await showApp(data.email);
+    } else {
+      document.getElementById('loadingScreen').classList.add('hidden');
+      document.getElementById('authOverlay').classList.remove('hidden');
+    }
+  } catch (e) {
+    document.getElementById('loadingScreen').classList.add('hidden');
+    document.getElementById('authOverlay').classList.remove('hidden');
+  }
+})();
+</script>
+</body>
+</html>
